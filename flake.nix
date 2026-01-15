@@ -35,11 +35,13 @@
           specialArgs = { inherit inputs; };
 
           modules = [
+            ({ ... }: { nixpkgs.config.allowUnfree = true; })
+
             ./hosts/legion/configuration.nix
             ./hosts/legion/hardware-configuration.nix
 
-            disko.nixosModules.disko
-            ./hosts/legion/disko.nix
+            # disko.nixosModules.disko
+            # ./hosts/legion/disko.nix
 
             home-manager.nixosModules.home-manager
             {
