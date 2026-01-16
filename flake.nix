@@ -6,18 +6,13 @@
 
     nixos-hardware.url = "github:NixOS/nixos-hardware";
 
-    disko = {
-      url = "github:nix-community/disko";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 
-  outputs = inputs@{ self, nixpkgs, home-manager, disko, ... }:
+  outputs = inputs@{ self, nixpkgs, home-manager, ... }:
     let
       system = "x86_64-linux";
 
@@ -38,10 +33,6 @@
             ({ ... }: { nixpkgs.config.allowUnfree = true; })
 
             ./hosts/legion/configuration.nix
-            ./hosts/legion/hardware-configuration.nix
-
-            # disko.nixosModules.disko
-            # ./hosts/legion/disko.nix
 
             home-manager.nixosModules.home-manager
             {

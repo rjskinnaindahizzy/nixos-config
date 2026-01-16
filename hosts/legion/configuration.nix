@@ -4,43 +4,12 @@
   ####### Imports #######
 
   imports = [
+    # Hardware scan (generated)
+    ./hardware-configuration.nix
+
     # Legion 15ACH6H tuning from nixos-hardware (hybrid AMD + NVIDIA, power, etc.)
     inputs.nixos-hardware.nixosModules.lenovo-legion-15ach6h-hybrid
   ];
-
-  boot.initrd.luks.devices."luks-a2b1aae2-b634-4d58-8848-5edda9a86c9b".device =
-    "/dev/disk/by-uuid/a2b1aae2-b634-4d58-8848-5edda9a86c9b";
-
-  ####### Boot / Disks / LUKS #######
-
-  # Use the Windows ESP (nvme1n1p3, UUID 38BE-2BE4) as the primary ESP for systemd-boot
-  fileSystems."/boot" = lib.mkForce {
-    device = "/dev/disk/by-uuid/38BE-2BE4";
-    fsType = "vfat";
-    options = [ "fmask=0077" "dmask=0077" ];
-  };
-
-  fileSystems."/boot/linux-esp" = {
-    device = "/dev/disk/by-uuid/1CCE-834D";
-    fsType = "vfat";
-    options = [ "nofail" "fmask=0077" "dmask=0077" ];
-  };
-
-  # Automount Windows NTFS partition (nvme1n1p2)
-  boot.supportedFilesystems = [ "ntfs3" ];
-
-  fileSystems."/mnt/windows" = {
-    device = "/dev/disk/by-uuid/5AD43252D432311D";
-    fsType = "ntfs3";
-    options = [
-      "uid=1000"
-      "gid=100"
-      "umask=0022"
-      "nofail"
-      "x-systemd.automount"
-      "x-systemd.idle-timeout=5min"
-    ];
-  };
 
   boot.loader = {
     efi = {
@@ -64,6 +33,12 @@
 
   # Gaming/Proton memory mapping requirement
   boot.kernel.sysctl."vm.max_map_count" = 2147483642;
+
+  # Keep existing LUKS setup (UUIDs from your current config)
+  boot.initrd.luks.devices = {
+    "luks-a2b1aae2-b634-4d58-8848-5edda9a86c9b".device =
+      "/dev/disk/by-uuid/a2b1aae2-b634-4d58-8848-5edda9a86c9b";
+  };
 
   # SSD/NVMe friendly
   services.fstrim.enable = true;
@@ -111,16 +86,12 @@
   # Firewall on, but we’ll open some ports for gaming where needed
   networking.firewall.enable = true;
 
-  systemd.services.NetworkManager-wait-online.enable = false;
-
   # Let nixos-hardware’s Legion module handle most laptop power & quirks,
   # but we can bias towards performance when plugged in via TLP/auto-cpu config
   powerManagement.enable = true;
 
   services.samba.enable = true;
   services.samba.usershares.enable = true;
-
-  services.flatpak.enable = true;
 
   # Compressed RAM swap - reduces disk swap pressure during gaming/ML
   zramSwap = {
@@ -283,4 +254,8 @@
       expat
     ];
   };
+
+  ####### Unfree packages #######
+
+  nixpkgs.config.allowUnfree = true;
 }

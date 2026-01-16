@@ -13,6 +13,7 @@
     bat
     eza
     fd
+    flatpak
     marktext
     obsidian
     vscodium
