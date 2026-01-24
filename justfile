@@ -37,6 +37,12 @@ init:
       cp "$HOME/CODING_STANDARDS.md" "$proj_dir/" 2>/dev/null || echo "Warning: CODING_STANDARDS.md not found in ~"; \
       [ -f "$HOME/.gitignore" ] && cp "$HOME/.gitignore" "$proj_dir/.gitignore" || true; \
       [ -f "$HOME/.editorconfig" ] && cp "$HOME/.editorconfig" "$proj_dir/.editorconfig" || true; \
+      printf "%s\n" \
+        "set allow-duplicate-recipes := true" \
+        "" \
+        "default *args:" \
+        "    @just -f ~/nixos-config/justfile {{{{args}}" \
+        > "$proj_dir/justfile"; \
       echo "dotenv" > "$proj_dir/.envrc"; \
       touch "$proj_dir/.env"; \
       echo ""; \
@@ -62,7 +68,7 @@ init:
       direnv allow "$proj_dir"; \
       echo "--- Setup Complete! ---"; \
       echo "Created: $proj_dir"; \
-      echo "Included: AGENTS.md, CODING_STANDARDS.md, .envrc, .env"; \
+      echo "Included: AGENTS.md, CODING_STANDARDS.md, .envrc, .env, justfile"; \
       echo "Use \"cd ~/$project\" to begin."'
 
 # Launch Arch Linux with BlackArch repos & i3-wm (ephemeral)

@@ -70,7 +70,8 @@ Run `just --list` to see all tasks.
 ### Project bootstrap
 
 - `just init`: create a new project folder under `~/` with `.envrc`, `.env`,
-  and copies of `AGENTS.md` and `CODING_STANDARDS.md`
+  copies of `AGENTS.md` and `CODING_STANDARDS.md`, a `justfile`, and
+  `just-wrapper.sh` (delegates to `~/nixos-config/justfile`)
 
 ## Module Options (Current Host: `legion`)
 

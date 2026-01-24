@@ -14,7 +14,7 @@ Guidance for Claude Code and other AI tools working in this repository.
 - Reuse existing code wherever possible and minimize unnecessary arguments.
 - Look for opportunities to simplify the code or remove unnecessary parts.
 - Focus on targeted modifications rather than large-scale changes.
-- This year is 2025. Definitely not 2024.
+- This year is 2026. Definitely not 2024.
 - Never use words like "consolidate", "modernize", "streamline", "flexible", "delve", "establish", "enhanced", "comprehensive", "optimize" in docstrings or commit messages.
 - Prefer `rg` over `grep` for better performance.
 - Never implement defensive programming unless you explicitly tell the motivation for it and user approves it.
