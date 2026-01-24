@@ -27,7 +27,7 @@ __pycache__/
 *.pyc
 
 # MCP servers
-.serena
+.serena/
 
 # Documentation
-documentation
+documentation/
