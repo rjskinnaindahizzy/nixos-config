@@ -1,0 +1,30 @@
+# Nix/NixOS
+result
+result-*
+.direnv/
+.venv/
+node_modules/
+
+# Secrets & Keys (CRITICAL)
+secrets.yaml
+secrets.enc.yaml
+*.age
+keys.txt
+.age-key.txt
+sops-key.txt
+id_ed25519*
+id_rsa*
+
+# Editor/OS
+.vscode/
+.idea/
+.DS_Store
+*.swp
+*~
+
+# Python
+__pycache__/
+*.pyc
+
+# MCP servers
+.serena
