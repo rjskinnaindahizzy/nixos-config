@@ -65,12 +65,6 @@ Run `just --list` to see all tasks.
 
 - `just shell`: open `modules/home/shell.nix` in `$EDITOR`
 - `just secrets`: edit SOPS secrets for `hosts/legion`
-- `just env`: open `~/.env` in `$EDITOR`
-
-### Project bootstrap
-
-- `just init`: create a new project folder under `~/` with `.envrc`, `.env`,
-  copies of `AGENTS.md` and `CODING_STANDARDS.md`, and a delegating `justfile`
 
 ## Module Options (Current Host: `legion`)
 
