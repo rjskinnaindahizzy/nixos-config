@@ -1,3 +1,6 @@
+NOTE: This is an upstream snapshot of the BlackArch guide stored for reference.
+It may not reflect the latest upstream content.
+
 The BlackArch Linux Guide https://www.blackarch.org/ Contents 1 Introduction 3 1.1 Overview . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 3 1.2 What is BlackArch Linux? . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 3 1.3 History of BlackArch Linux . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .

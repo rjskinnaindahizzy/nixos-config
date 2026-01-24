@@ -1,4 +1,7 @@
 NixOS Manual
+NOTE: This is an upstream snapshot (stable) stored for reference. It may not
+match the current system or the latest upstream manual. Use the online manual
+or `nixos-help` for the latest content.
 ===============
 
 | NixOS Manual |

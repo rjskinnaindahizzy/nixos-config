@@ -1,4 +1,7 @@
 | NixOS Manual |
+NOTE: This is an upstream snapshot (unstable) stored for reference. It may not
+match the current system or the latest upstream manual. Use the online manual
+or `nixos-help` for the latest content.
 | --- |
 |  |  | [Next](/manual/nixos/unstable/options) |
 
@@ -11890,4 +11893,3 @@ Contents of code blocks may be marked up further, e.g. if they refer to argument
 | --- | --- | --- |
 |  |  | [Next](/manual/nixos/unstable/options) |
 |  |  | Appendix A. Configuration Options |
-

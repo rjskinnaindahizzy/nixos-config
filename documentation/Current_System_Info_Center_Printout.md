@@ -1,4 +1,9 @@
 # Info Center Printout
+
+NOTE: This is a static snapshot captured from the KDE Info Center. It is not
+updated automatically. Treat it as historical context, not the current system
+state. If you need fresh data, re-export from KDE Info Center or use
+`nixos-version`, `uname -r`, and `ip addr`.
 ## Basic Information
 ### About this System
 Operating System: NixOS 25.11

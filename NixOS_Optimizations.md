@@ -1,6 +1,9 @@
 # NixOS Optimizations (Legion 15ACH6H)
 
-This document details the performance optimizations currently enabled on this system. These settings are managed via the `modules.performance` NixOS module and selected via NixOS specialisations.
+This document describes how performance tuning is applied on this host. Most
+performance settings live in `modules.performance` and are enabled only by
+specialisations. The base profile keeps the module disabled and uses stock
+defaults unless otherwise noted in `hosts/legion/configuration.nix`.
 
 Profile mapping:
 - `just perf` -> `specialisation performance`
@@ -8,47 +11,61 @@ Profile mapping:
 - `just bal` -> base configuration (no specialisation)
 
 Profiles:
-- `performance` (just `perf`): Enables all performance tweaks except HugePages (kept off for general use).
+- `performance` (just `perf`): Enables performance tuning, HugePages stay off.
 - `llm` (just `llm`): Same as performance, plus HugePages enabled for LLM workloads.
-- Base (just `bal`): Disables the performance module entirely; system defaults apply.
+- Base (just `bal`): `modules.performance.enable = false`; module changes do not apply.
 
 ## 1. Kernel & CPU
 
-* **Kernel:** Linux Zen Kernel (`linuxPackages_zen`) for improved desktop responsiveness and lower latency.
-* **Governor:** `performance` (via `amd_pstate` driver).
+Base profile:
+* **Kernel:** Stock kernel (`pkgs.linuxPackages`).
+* **Performance module:** Disabled.
+
+Performance and LLM profiles:
+* **Kernel:** Linux Zen Kernel (`linuxPackages_zen`).
+* **Governor:** `performance` (via `amd_pstate`).
 * **AMD P-State:** Active (`amd_pstate=active`, `amd_pstate_epp=performance`).
-* **Core Isolation:** **Disabled** (`isolation.enable = false`). All 16 threads are available to the OS scheduler. This eliminates "housekeeping" bottlenecks, ensuring smooth performance for desktop applications (Chrome, Outlook) which previously stuttered when restricted to cores 0-5.
-* **Mitigations:** **Disabled** (`mitigations=off`) for maximum performance (5-15% gain). *Security warning: Spectre/Meltdown protections are off.*
+* **Core Isolation:** **Enabled** (`isolation.enable = true`, isolates 6-15).
+* **Mitigations:** **Disabled** (`mitigations=off`). *Security warning: Spectre/Meltdown protections are off.*
 
 ## 2. Memory Management
 
-* **HugePages:** **Disabled** (`hugepages.enable = false`) to reclaim 4GB of RAM for general desktop usage and multitasking.
-* **Transparent HugePages (THP):** set to `always` (with `defer+madvise` defrag).
-* **ZRAM:** 50% of RAM size, compressed with `lz4` for lowest latency.
-* **Zswap:** Enabled (zstd compressor, 10% max pool).
-* **Swappiness:** Tuned to 5 (prefer RAM).
-* **Virtual Memory:** Tuning for high-throughput (dirty ratios, compaction).
+Base profile:
+* **ZRAM:** 50% of RAM size, compressed with `lz4`.
+
+Performance profile:
+* **HugePages:** **Disabled** (`hugepages.enable = false`).
+* **Transparent HugePages:** `always`.
+* **Zswap:** Enabled (`zstd`, 10% max pool).
+* **Swappiness:** 5.
+
+LLM profile:
+* **HugePages:** **Enabled** (`hugepages.enable = true`, `count = 4`).
+* **Transparent HugePages:** `always`.
+* **Zswap:** Enabled (`zstd`, 10% max pool).
+* **Swappiness:** 5.
 
 ## 3. Storage (NVMe)
 
-* **Scheduler:** `none` (optimal for NVMe).
+Performance and LLM profiles:
 * **Read-Ahead:**
-  * `nvme0n1` (OS/Games): 256KB (Random I/O focus).
-  * `nvme1n1` (Data/LLM): 512KB (Sequential Read focus).
-* **Latency:** `nvme_core.default_ps_max_latency_us=0` (Prevent deep sleep states).
+  * `nvme0n1` (OS/Games): 256KB.
+  * `nvme1n1` (Data/LLM): 512KB.
+* **Latency:** `nvme_core.default_ps_max_latency_us=0`.
 
 ## 4. Networking
 
+Performance and LLM profiles:
 * **TCP Congestion Control:** BBR (`tcp_bbr`) enabled.
-* **Tuning:** Aggressive buffer sizing (`rmem`/`wmem`) for high-speed local transfers (e.g., Samba, Tailscale).
-* **IRQ Affinity:** Enabled, but with isolation disabled the affinity mask is `ffff` (all cores).
+* **Tuning:** Aggressive buffer sizing (`rmem`/`wmem`).
+* **IRQ Affinity:** Enabled with isolation active (IRQs on cores 0-5).
 
 ## 5. NVIDIA GPU
 
-* **Power Limit:** Not applied (performance tuning disabled in config).
-* **Clocks:** Overclocking not applied (clock offsets disabled in config).
+Performance and LLM profiles:
+* **Power Limit:** 130W.
+* **Clocks:** Clock offsets enabled.
 * **Persistence Mode:** Enabled.
-* **Resizable BAR:** Enabled.
 
 ## Implementation
 

@@ -1,3 +1,6 @@
+NOTE: This is an upstream snapshot of the BlackArch tools list stored for
+reference. The tool count and versions can change upstream.
+
 ## BlackArch Linux Penetration Testing Distribution
 
 ## Over 2800 tools

@@ -70,8 +70,7 @@ Run `just --list` to see all tasks.
 ### Project bootstrap
 
 - `just init`: create a new project folder under `~/` with `.envrc`, `.env`,
-  copies of `AGENTS.md` and `CODING_STANDARDS.md`, a `justfile`, and
-  `just-wrapper.sh` (delegates to `~/nixos-config/justfile`)
+  copies of `AGENTS.md` and `CODING_STANDARDS.md`, and a delegating `justfile`
 
 ## Module Options (Current Host: `legion`)
 
@@ -90,24 +89,15 @@ modules.nvidia = {
 
 ### `modules.performance`
 
+Base profile (no specialisation):
+
 ```nix
 modules.performance = {
-  enable = true;
-  cpu = {
-    governor = "performance";
-    amdPstate = true;
-    isolation.enable = false; # Disabled for desktop responsiveness
-    disableIdleStates = true; # Lowest latency, highest power
-  };
-  memory.hugepages = {
-    enable = false; # Disabled for desktop use
-    count = 4; # 4GB (if enabled)
-  };
-  kernel.zen = true;         # Use Zen kernel
-  mitigations.disable = true; # Disable security mitigations
-  irq.affinity = true;       # IRQ tuning enabled
+  enable = false;
 };
 ```
+
+The `performance` and `llm` specialisations override this. See `NixOS_Optimizations.md`.
 
 ### `modules.gaming`
 
@@ -116,6 +106,8 @@ modules.gaming = {
   enable = true;
   steam.enable = true;
   steam.remotePlay = true;
+  gamemode = true;
+  gamescope = true;
 };
 ```
 
