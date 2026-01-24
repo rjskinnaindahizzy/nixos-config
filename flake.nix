@@ -32,6 +32,7 @@
     }@inputs:
     let
       system = "x86_64-linux";
+      userName = "user";
       pkgs = import nixpkgs {
         inherit system;
         config.allowUnfree = true;
@@ -58,8 +59,8 @@
             useGlobalPkgs = true;
             useUserPackages = true;
             backupFileExtension = "backup";
-            extraSpecialArgs = { inherit inputs; };
-            users.user = import ./hosts/legion/home.nix;
+            extraSpecialArgs = { inherit inputs userName; };
+            users.${userName} = import ./hosts/legion/home.nix;
           };
         }
       ];
@@ -88,7 +89,7 @@
       nixosConfigurations = {
         legion = nixpkgs.lib.nixosSystem {
           inherit system;
-          specialArgs = { inherit inputs cachixConfig; };
+          specialArgs = { inherit inputs cachixConfig userName; };
           modules = baseModules;
         };
       };

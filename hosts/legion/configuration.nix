@@ -7,6 +7,10 @@
   lib,
   ...
 }:
+let
+  userName = "user";
+  userHome = "/home/${userName}";
+in
 {
   imports = [
     ./hardware-configuration.nix
@@ -47,7 +51,7 @@
       wayland = true;
       autoLogin = {
         enable = true;
-        user = "user";
+        user = userName;
       };
     };
 
@@ -271,8 +275,16 @@
   # Blacklist unstable drivers
   boot.blacklistedKernelModules = [
     "ntfs3"
-    "hid_logitech_hidpp"
   ];
+
+  # Delay Logitech HID++ module load to avoid early-init issues
+  systemd.services.logitech-hidpp-load = {
+    description = "Load Logitech HID++ module after boot";
+    wantedBy = [ "multi-user.target" ];
+    after = [ "multi-user.target" ];
+    serviceConfig.Type = "oneshot";
+    script = "${pkgs.kmod}/bin/modprobe hid_logitech_hidpp";
+  };
 
   #─────────────────────────────────────────────────────────────────────────────
   # Host Identity
@@ -296,8 +308,8 @@
   #─────────────────────────────────────────────────────────────────────────────
   sops = {
     age = {
-      keyFile = "/home/user/.config/sops/age/keys.txt";
-      sshKeyPaths = [ "/home/user/.ssh/id_ed25519" ];
+      keyFile = "${userHome}/.config/sops/age/keys.txt";
+      sshKeyPaths = [ "${userHome}/.ssh/id_ed25519" ];
     };
 
     secrets = {
@@ -324,9 +336,9 @@
   #─────────────────────────────────────────────────────────────────────────────
   # User
   #─────────────────────────────────────────────────────────────────────────────
-  users.users.user = {
+  users.users.${userName} = {
     isNormalUser = true;
-    description = "user";
+    description = userName;
     extraGroups = [
       "networkmanager"
       "wheel"
