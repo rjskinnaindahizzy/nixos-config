@@ -28,3 +28,6 @@ __pycache__/
 
 # MCP servers
 .serena
+
+# Documentation
+documentation
