@@ -12,7 +12,7 @@ switch:
 # Quick sync of shell and home changes
 sync:
     @echo "Applying configuration changes..."
-    sudo nixos-rebuild switch --flake .#legion --fast
+    sudo nixos-rebuild switch --flake .#legion
 
 # Edit the shell configuration
 shell:
@@ -24,7 +24,7 @@ secrets:
 
 # Build but do not switch (Dry Run)
 build:
-    nixos-rebuild build --flake .#legion
+    nix build .#nixosConfigurations.legion.config.system.build.toplevel
 
 # Enable performance profile
 perf:
@@ -39,10 +39,15 @@ llm:
     sudo nixos-rebuild switch --flake .#legion --specialisation llm
 
 
+# Build VM only
+build-vm:
+    nixos-rebuild build-vm --flake .#legion
+
 # Build and run a VM of the configuration with hardware acceleration
 vm:
     @bash -c ' \
-      nixos-rebuild build-vm --flake .#legion; \
+      set -euo pipefail; \
+      just build-vm; \
       QEMU_AUDIO_DRV=pa ./result/bin/run-legion-vm || true; \
       echo ""; \
       read -p "VM closed. Self-destruct VM artifacts (result/ and disks)? [y/N]: " cleanup; \
@@ -53,16 +58,17 @@ vm:
         echo "Keeping VM artifacts."; \
       fi'
 
-# Update flake.lock to latest inputs
+# Update flake.lock and verify
 up:
     nix flake update
+    nix flake check
 
 # Format all Nix files (Fast & Targeted)
 fmt:
     @echo "Formatting Nix files..."
     @files=$(fd -e nix -t f); \
     if [ -n "$files" ]; then \
-      nix fmt -- $files; \
+      nixfmt -- $files; \
     fi
     @echo "✓ Formatting complete."
 
@@ -73,6 +79,13 @@ check:
 # Run Nix lint checks only (statix, deadnix, nixfmt --check)
 lint-nix:
     nix build .#checks.x86_64-linux.lint-nix
+
+# Nix formatting check (fast)
+fmt-check:
+    @files=$(fd -e nix -t f); \
+    if [ -n "$files" ]; then \
+      nixfmt --check -- $files; \
+    fi
 
 # Show flake outputs
 flake-show:
@@ -96,6 +109,7 @@ eval attr:
 
 # Garbage collect old generations (Keep last 7 days)
 clean:
+    @echo "Warning: garbage collection is already scheduled via nix.gc; this is manual."
     sudo nix-collect-garbage --delete-older-than 7d
 
 # Open Nix REPL with flake loaded (Debug context)
@@ -110,13 +124,16 @@ logs:
 maintain:
     just up
     just fmt
-    just check
     @echo "Building system..."
     @OUT=$(nix build .#nixosConfigurations.legion.config.system.build.toplevel --print-out-paths) && \
-    if [ -f "/run/secrets/cachix_auth_token" ]; then \
+    just cachix-push "$OUT"
+    just switch
+
+# Push a built output to Cachix (usage: just cachix-push /nix/store/...)
+cachix-push out:
+    @if [ -f "/run/secrets/cachix_auth_token" ]; then \
         echo "Pushing to Cachix..."; \
-        CACHIX_AUTH_TOKEN=$(cat /run/secrets/cachix_auth_token) cachix push rjskinnaindahizzy "$OUT"; \
+        CACHIX_AUTH_TOKEN=$(cat /run/secrets/cachix_auth_token) cachix push rjskinnaindahizzy {{out}}; \
     else \
         echo "No Cachix token found. Skipping push."; \
     fi
-    just switch

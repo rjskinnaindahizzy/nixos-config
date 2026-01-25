@@ -117,98 +117,97 @@ in
       kernelModules = [ "tcp_bbr" ];
 
       # Sysctl Settings
-      kernel.sysctl =
-        {
-          # Memory Management (16GB optimized)
-          "vm.dirty_background_ratio" = 2;
-          "vm.dirty_ratio" = 40;
-          "vm.dirty_expire_centisecs" = 30000;
-          "vm.dirty_writeback_centisecs" = 5000;
-          "vm.vfs_cache_pressure" = 60;
-          "vm.swappiness" = cfg.memory.swappiness;
-          "vm.compaction_proactiveness" = 0;
-          "vm.watermark_boost_factor" = 0;
-          "vm.watermark_scale_factor" = 125;
-          "vm.min_free_kbytes" = 524288;
-          "vm.zone_reclaim_mode" = 0;
-          "vm.page-cluster" = 0;
-          "vm.overcommit_memory" = 1;
-          "vm.overcommit_ratio" = 90;
+      kernel.sysctl = {
+        # Memory Management (16GB optimized)
+        "vm.dirty_background_ratio" = 2;
+        "vm.dirty_ratio" = 40;
+        "vm.dirty_expire_centisecs" = 30000;
+        "vm.dirty_writeback_centisecs" = 5000;
+        "vm.vfs_cache_pressure" = 60;
+        "vm.swappiness" = cfg.memory.swappiness;
+        "vm.compaction_proactiveness" = 0;
+        "vm.watermark_boost_factor" = 0;
+        "vm.watermark_scale_factor" = 125;
+        "vm.min_free_kbytes" = 524288;
+        "vm.zone_reclaim_mode" = 0;
+        "vm.page-cluster" = 0;
+        "vm.overcommit_memory" = 1;
+        "vm.overcommit_ratio" = 90;
 
-          # NUMA balancing (AMD Ryzen)
-          "kernel.numa_balancing" = 1;
+        # NUMA balancing (AMD Ryzen)
+        "kernel.numa_balancing" = 1;
 
-          # Scheduler
-          "kernel.sched_autogroup_enabled" = 0;
-          "kernel.sched_schedstats" = 0;
+        # Scheduler
+        "kernel.sched_autogroup_enabled" = 0;
+        "kernel.sched_schedstats" = 0;
 
-          # Watchdog/Debugging (disabled for performance)
-          "kernel.printk" = "3 4 1 3";
-          "kernel.nmi_watchdog" = 0;
-          "kernel.watchdog" = 0;
-          "kernel.watchdog_thresh" = 60;
-          "kernel.split_lock_mitigate" = 0;
+        # Watchdog/Debugging (disabled for performance)
+        "kernel.printk" = "3 4 1 3";
+        "kernel.nmi_watchdog" = 0;
+        "kernel.watchdog" = 0;
+        "kernel.watchdog_thresh" = 60;
+        "kernel.split_lock_mitigate" = 0;
 
-          # File System
-          "fs.file-max" = 2097152;
-          "fs.inotify.max_user_watches" = 524288;
-          "fs.inotify.max_user_instances" = 512;
+        # File System
+        "fs.file-max" = 2097152;
+        "fs.inotify.max_user_watches" = 524288;
+        "fs.inotify.max_user_instances" = 512;
 
-          # Security hardening that also improves performance
-          "kernel.unprivileged_bpf_disabled" = 1;
+        # Security hardening that also improves performance
+        "kernel.unprivileged_bpf_disabled" = 1;
 
-          # Perf events for profiling
-          "kernel.perf_event_paranoid" = -1;
-        }
-        // lib.optionalAttrs cfg.network.bbr {
-          # BBR TCP Congestion Control
-          "net.core.default_qdisc" = "fq";
-          "net.ipv4.tcp_congestion_control" = "bbr";
-        }
-        // lib.optionalAttrs cfg.network.tuning {
-          # Network Performance Tuning
-          "net.core.netdev_max_backlog" = 16384;
-          "net.core.somaxconn" = 8192;
-          "net.core.rmem_default" = 31457280;
-          "net.core.rmem_max" = 268435456;
-          "net.core.wmem_default" = 31457280;
-          "net.core.wmem_max" = 268435456;
-          "net.core.optmem_max" = 25165824;
-          "net.ipv4.tcp_rmem" = "8192 262144 536870912";
-          "net.ipv4.tcp_wmem" = "4096 65536 536870912";
-          "net.ipv4.tcp_adv_win_scale" = -2;
-          "net.ipv4.tcp_notsent_lowat" = 131072;
-          "net.ipv4.tcp_mtu_probing" = 1;
-          "net.ipv4.tcp_fastopen" = 3;
-          "net.ipv4.tcp_max_syn_backlog" = 8192;
-          "net.ipv4.tcp_max_tw_buckets" = 2000000;
-          "net.ipv4.tcp_tw_reuse" = 1;
-          "net.ipv4.tcp_fin_timeout" = 10;
-          "net.ipv4.tcp_slow_start_after_idle" = 0;
-          "net.ipv4.tcp_keepalive_time" = 60;
-          "net.ipv4.tcp_keepalive_intvl" = 10;
-          "net.ipv4.tcp_keepalive_probes" = 6;
-          "net.ipv4.tcp_syncookies" = 1;
-          "net.ipv4.tcp_rfc1337" = 1;
-          "net.ipv4.tcp_timestamps" = 0;
-          "net.ipv4.tcp_sack" = 1;
-          "net.ipv4.tcp_fack" = 1;
-          "net.ipv4.tcp_window_scaling" = 1;
-          "net.ipv4.tcp_no_metrics_save" = 1;
-          "net.ipv4.tcp_moderate_rcvbuf" = 1;
+        # Perf events for profiling
+        "kernel.perf_event_paranoid" = -1;
+      }
+      // lib.optionalAttrs cfg.network.bbr {
+        # BBR TCP Congestion Control
+        "net.core.default_qdisc" = "fq";
+        "net.ipv4.tcp_congestion_control" = "bbr";
+      }
+      // lib.optionalAttrs cfg.network.tuning {
+        # Network Performance Tuning
+        "net.core.netdev_max_backlog" = 16384;
+        "net.core.somaxconn" = 8192;
+        "net.core.rmem_default" = 31457280;
+        "net.core.rmem_max" = 268435456;
+        "net.core.wmem_default" = 31457280;
+        "net.core.wmem_max" = 268435456;
+        "net.core.optmem_max" = 25165824;
+        "net.ipv4.tcp_rmem" = "8192 262144 536870912";
+        "net.ipv4.tcp_wmem" = "4096 65536 536870912";
+        "net.ipv4.tcp_adv_win_scale" = -2;
+        "net.ipv4.tcp_notsent_lowat" = 131072;
+        "net.ipv4.tcp_mtu_probing" = 1;
+        "net.ipv4.tcp_fastopen" = 3;
+        "net.ipv4.tcp_max_syn_backlog" = 8192;
+        "net.ipv4.tcp_max_tw_buckets" = 2000000;
+        "net.ipv4.tcp_tw_reuse" = 1;
+        "net.ipv4.tcp_fin_timeout" = 10;
+        "net.ipv4.tcp_slow_start_after_idle" = 0;
+        "net.ipv4.tcp_keepalive_time" = 60;
+        "net.ipv4.tcp_keepalive_intvl" = 10;
+        "net.ipv4.tcp_keepalive_probes" = 6;
+        "net.ipv4.tcp_syncookies" = 1;
+        "net.ipv4.tcp_rfc1337" = 1;
+        "net.ipv4.tcp_timestamps" = 0;
+        "net.ipv4.tcp_sack" = 1;
+        "net.ipv4.tcp_fack" = 1;
+        "net.ipv4.tcp_window_scaling" = 1;
+        "net.ipv4.tcp_no_metrics_save" = 1;
+        "net.ipv4.tcp_moderate_rcvbuf" = 1;
 
-          # Low-latency polling (for gaming/real-time)
-          "net.core.busy_poll" = 50;
-          "net.core.busy_read" = 50;
+        # Low-latency polling (for gaming/real-time)
+        "net.core.busy_poll" = 50;
+        "net.core.busy_read" = 50;
 
-          # Increase netdev budget for high-throughput
-          "net.core.netdev_budget" = 600;
-          "net.core.netdev_budget_usecs" = 4000;
+        # Increase netdev budget for high-throughput
+        "net.core.netdev_budget" = 600;
+        "net.core.netdev_budget_usecs" = 4000;
 
-          # TCP/UDP memory limits (pages)
-          "net.ipv4.tcp_mem" = "1048576 1572864 2097152";
-          "net.ipv4.udp_mem" = "1048576 1572864 2097152";
-        };
+        # TCP/UDP memory limits (pages)
+        "net.ipv4.tcp_mem" = "1048576 1572864 2097152";
+        "net.ipv4.udp_mem" = "1048576 1572864 2097152";
+      };
 
       # NVIDIA Module Options
       extraModprobeConfig =

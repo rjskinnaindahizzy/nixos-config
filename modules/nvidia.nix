@@ -74,7 +74,8 @@
       __GLX_VENDOR_LIBRARY_NAME = lib.mkDefault "nvidia";
       NVD_BACKEND = lib.mkDefault "direct";
       KWIN_DRM_USE_EGL_STREAMS = lib.mkDefault "0";
-      NIXOS_OZONE_WL = lib.mkDefault "1";
+      NIXOS_OZONE_WL = lib.mkDefault "0";
+      OZONE_PLATFORM_HINT = lib.mkDefault "auto";
     };
 
     # GPU monitoring tools

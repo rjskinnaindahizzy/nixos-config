@@ -7,7 +7,7 @@
     ./networking.nix
     ./nix-settings.nix
     ./nvidia.nix
-    ./performance.nix
+    ./performance
     ./security.nix
     ./virtualization.nix
   ];

@@ -1,4 +1,5 @@
 {
+  config,
   pkgs,
   ...
 }:
@@ -35,6 +36,10 @@
 
     # Simple dotfiles that don't warrant a module
   };
+
+  home.sessionPath = [
+    "${config.xdg.stateHome}/nix/profile/bin"
+  ];
 
   # Enable Home Manager
   programs.home-manager.enable = true;

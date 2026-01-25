@@ -65,6 +65,14 @@
           "flakes"
         ];
 
+        use-xdg-base-directories = true;
+        accept-flake-config = true;
+        trusted-users = [
+          "root"
+          "@wheel"
+        ];
+        allowed-users = [ "@wheel" ];
+
         # Performance optimizations
         auto-optimise-store = lib.mkDefault true; # Deduplicate store (saves 10-30% disk)
         keep-outputs = lib.mkDefault false;

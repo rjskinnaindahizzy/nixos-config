@@ -1,5 +1,5 @@
 # Performance specialisation - maximum CPU/GPU performance, no HugePages
-{ lib, ... }:
+{ ... }:
 {
   imports = [ ./base.nix ];
 

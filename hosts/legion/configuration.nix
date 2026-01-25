@@ -30,7 +30,7 @@ in
 
     # Security (hardened profile + overrides)
     security = {
-      hardened = true;
+      hardened = false;
       wheelNeedsPassword = false;
     };
 
@@ -85,87 +85,10 @@ in
     performance.enable = false;
   };
 
-  # Performance specialisations
+  # Performance specialisations (extracted to specialisations/)
   specialisation = {
-    performance.configuration = {
-      modules.performance = {
-        enable = lib.mkForce true;
-        cpu = {
-          governor = "performance";
-          amdPstate = true;
-          isolation.enable = true;
-          disableIdleStates = true;
-        };
-        memory = {
-          swappiness = 5;
-          transparentHugepages = "always";
-          hugepages = {
-            enable = false; # Keep off for general use
-            count = 4;
-          };
-        };
-        network = {
-          bbr = true;
-          tuning = true;
-        };
-        storage = {
-          nvmeOptimization = true;
-          readAhead = {
-            osDrive = 256;
-            dataDrive = 512;
-          };
-        };
-        irq.affinity = true;
-        nvidia = {
-          performance = true;
-          persistenceMode = true;
-          powerLimit = 130;
-          clockOffsets = true;
-        };
-        kernel.zen = true;
-        mitigations.disable = true;
-      };
-    };
-
-    llm.configuration = {
-      modules.performance = {
-        enable = lib.mkForce true;
-        cpu = {
-          governor = "performance";
-          amdPstate = true;
-          isolation.enable = true;
-          disableIdleStates = true;
-        };
-        memory = {
-          swappiness = 5;
-          transparentHugepages = "always";
-          hugepages = {
-            enable = true; # LLM workloads
-            count = 4;
-          };
-        };
-        network = {
-          bbr = true;
-          tuning = true;
-        };
-        storage = {
-          nvmeOptimization = true;
-          readAhead = {
-            osDrive = 256;
-            dataDrive = 512;
-          };
-        };
-        irq.affinity = true;
-        nvidia = {
-          performance = true;
-          persistenceMode = true;
-          powerLimit = 130;
-          clockOffsets = true;
-        };
-        kernel.zen = true;
-        mitigations.disable = true;
-      };
-    };
+    performance.configuration.imports = [ ../../specialisations/performance.nix ];
+    llm.configuration.imports = [ ../../specialisations/llm.nix ];
   };
 
   #─────────────────────────────────────────────────────────────────────────────
