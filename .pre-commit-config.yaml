@@ -1,0 +1,21 @@
+repos:
+  - repo: local
+    hooks:
+      - id: nixfmt
+        name: Format Nix files
+        entry: nixfmt
+        language: system
+        files: \.nix$
+
+      - id: statix
+        name: Nix linter (statix)
+        entry: statix check
+        language: system
+        files: \.nix$
+        pass_filenames: false
+
+      - id: deadnix
+        name: Dead code detection
+        entry: deadnix
+        language: system
+        files: \.nix$
