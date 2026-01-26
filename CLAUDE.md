@@ -23,7 +23,7 @@ nixos-config/
 │   ├── development.nix       # Dev tools, CUDA
 │   ├── docker.nix
 │   ├── gaming.nix
-│   ├── networking.nix        # Tailscale, Samba
+│   ├── networking.nix        # Tailscale, Samba, CIFS client
 │   ├── nix-settings.nix      # Caches, GC
 │   ├── nvidia.nix            # GPU config
 │   ├── security.nix
@@ -121,7 +121,7 @@ SOPS-encrypted in `hosts/legion/secrets.yaml`. Decrypted at runtime to `/run/sec
 just secrets     # Edit secrets
 ```
 
-Current secrets: `cachix_auth_token`, `morph_api_key`
+Current secrets: `cachix_auth_token`, `morph_api_key`, `smb_username`, `smb_password`, `smb_domain`
 
 ## DevShells
 
@@ -152,10 +152,34 @@ just build       # Build system derivation
 - `specialisations/base.nix` - Shared performance settings
 - `flake.nix` - Inputs, devShells, checks
 
+## CIFS Client (Windows Network Shares)
+
+Configured in `modules.networking.cifsClient`:
+
+```nix
+modules.networking.cifsClient = {
+  enable = true;
+  sopsFile = ./secrets.yaml;  # Must contain smb_username, smb_password, smb_domain
+  guiBrowsing = true;         # Enables gvfs for Dolphin smb:// URLs
+  mounts.share = {
+    server = "HOSTNAME";
+    share = "ShareName";
+    mountPoint = "/mnt/share";
+    automount = true;         # Mounts on first access, won't block boot
+  };
+};
+```
+
+- Credentials stored via SOPS template at `/run/secrets/smb-credentials`
+- Automount uses systemd with 60s idle timeout
+- GUI browsing: `smb://server` in Dolphin location bar
+- secrets.yaml must be tracked in git (`git add -f`) for Nix flakes
+
 ## Notes
 
 - Documentation folder is gitignored (local reference copies)
 - LUKS encryption on both NVMe drives
 - Windows partition auto-mounted at `/mnt/windows`
+- Windows network share at `/mnt/share` (192.168.50.59/E aka POWEREDGE)
 - Logitech HID++ module delayed to avoid boot lag
 - NVIDIA hybrid GPU (AMD iGPU + RTX 3060)

@@ -14,7 +14,7 @@ A clean, modular NixOS configuration for the Lenovo Legion 15ACH6H with gaming a
 │   ├── docker.nix           # Container runtime
 │   ├── gaming.nix           # Steam, Gamemode, Gamescope
 │   ├── home/                # Home Manager modules
-│   ├── networking.nix       # Tailscale, firewall, Samba
+│   ├── networking.nix       # Tailscale, firewall, Samba, CIFS client
 │   ├── nix-settings.nix     # Nix config, caches
 │   ├── nvidia.nix           # NVIDIA GPU + hybrid setup
 │   ├── performance.nix      # Kernel, CPU, RAM optimizations
@@ -130,6 +130,19 @@ modules.networking = {
     exitNode = false;
   };
   samba = true;
+
+  # CIFS client for Windows network shares
+  cifsClient = {
+    enable = true;
+    sopsFile = ./secrets.yaml; # Must contain smb_username, smb_password, smb_domain
+    guiBrowsing = true;        # Enables gvfs for Dolphin smb:// URLs
+    mounts.share = {
+      server = "192.168.50.59"; # POWEREDGE
+      share = "E";
+      mountPoint = "/mnt/share";
+      automount = true;        # Mounts on first access
+    };
+  };
 };
 ```
 

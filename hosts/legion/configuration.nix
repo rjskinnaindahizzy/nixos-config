@@ -42,6 +42,20 @@ in
         ssh = true;
       };
       samba = true;
+
+      # CIFS client for Windows network shares
+      cifsClient = {
+        enable = true;
+        sopsFile = ./secrets.yaml;
+        guiBrowsing = true; # Enables smb:// in Dolphin
+
+        mounts.share = {
+          server = "192.168.50.59"; # POWEREDGE
+          share = "E";
+          mountPoint = "/mnt/share";
+          automount = true;
+        };
+      };
     };
 
     # Desktop
