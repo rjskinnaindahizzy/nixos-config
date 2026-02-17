@@ -114,7 +114,7 @@ in
       efi.efiSysMountPoint = "/boot";
       systemd-boot = {
         enable = true;
-        configurationLimit = 5;
+        configurationLimit = 1;
       };
       timeout = 1;
     };
