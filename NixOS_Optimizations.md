@@ -42,14 +42,14 @@ Performance profile:
 
 - **HugePages:** **Disabled** (`hugepages.enable = false`).
 - **Transparent HugePages:** `always`.
-- **Zswap:** Enabled (`zstd`, 10% max pool).
+- **Zswap:** **Disabled** (to prevent conflict with `zram`).
 - **Swappiness:** 5.
 
 LLM profile:
 
 - **HugePages:** **Enabled** (`hugepages.enable = true`, `count = 4`).
 - **Transparent HugePages:** `always`.
-- **Zswap:** Enabled (`zstd`, 10% max pool).
+- **Zswap:** **Disabled** (to prevent conflict with `zram`).
 - **Swappiness:** 5.
 
 ## 3. Storage (NVMe)

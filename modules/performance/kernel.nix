@@ -84,11 +84,9 @@ in
           "nvidia.NVreg_PreserveVideoMemoryAllocations=1"
           "nvidia.NVreg_EnableResizableBar=1"
         ]
-        # zswap
+        # zswap disabled to prevent conflicts with zramSwap in host config
         ++ [
-          "zswap.enabled=1"
-          "zswap.compressor=zstd"
-          "zswap.max_pool_percent=10"
+          "zswap.enabled=0"
         ]
         # Security mitigations disabled (DANGEROUS)
         ++ lib.optionals cfg.mitigations.disable [
