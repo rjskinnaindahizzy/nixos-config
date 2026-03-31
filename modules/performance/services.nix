@@ -144,11 +144,11 @@ in
         serviceConfig = {
           Type = "oneshot";
           RemainAfterExit = true;
+          ExecStartPre = "${config.hardware.nvidia.package.bin}/bin/nvidia-smi -L";
+          Restart = "on-failure";
+          RestartSec = "1s";
         };
         script = ''
-          # Wait for NVIDIA driver to be ready
-          sleep 2
-
           ${lib.optionalString cfg.nvidia.persistenceMode ''
             # Enable persistence mode
             nvidia-smi -pm 1 2>/dev/null || true
