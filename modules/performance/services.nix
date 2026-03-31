@@ -87,9 +87,7 @@ in
             done
 
             # Set maximum IRQ thread priorities
-            for pid in $(${pkgs.procps}/bin/pgrep -f '\[irq/'); do
-              ${pkgs.util-linux}/bin/chrt -f -p 99 "$pid" 2>/dev/null || true
-            done
+            ${pkgs.procps}/bin/pgrep -f '\[irq/' | ${pkgs.findutils}/bin/xargs -r -n 1 -P 0 ${pkgs.util-linux}/bin/chrt -f -p 99 2>/dev/null || true
 
             # Network RPS optimization
             for iface in /sys/class/net/*/queues/rx-*/rps_cpus; do
