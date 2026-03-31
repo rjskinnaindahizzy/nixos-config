@@ -44,6 +44,7 @@ Run `just --list` to see all tasks.
 - `just check`: run `nix flake check`
 - `just fmt`: format all `.nix` files
 - `just lint-nix`: run Nix linters (statix, deadnix, nixfmt --check)
+- `just init <name>`: initialize a project with secrets from `/run/secrets/` via `.envrc`
 - `just dev`: enter default dev shell
 - `just dev-cuda`: enter CUDA dev shell
 
