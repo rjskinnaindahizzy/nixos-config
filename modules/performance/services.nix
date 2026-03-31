@@ -44,12 +44,20 @@ in
           done
 
           # Set minimum frequency to maximum (force high clocks)
-          for c in /sys/devices/system/cpu/cpu*/cpufreq/scaling_min_freq; do
-            if [ -w "$c" ]; then
-              max_freq=$(cat "''${c%scaling_min_freq}cpuinfo_max_freq" 2>/dev/null)
-              [ -n "$max_freq" ] && echo "$max_freq" > "$c" 2>/dev/null || true
+          # Cache max_freq from first available core to avoid repeated file reads
+          max_freq=""
+          for f in /sys/devices/system/cpu/cpu*/cpufreq/cpuinfo_max_freq; do
+            if [ -r "$f" ]; then
+              max_freq=$(cat "$f" 2>/dev/null)
+              [ -n "$max_freq" ] && break
             fi
           done
+
+          if [ -n "$max_freq" ]; then
+            for c in /sys/devices/system/cpu/cpu*/cpufreq/scaling_min_freq; do
+              [ -w "$c" ] && echo "$max_freq" > "$c" 2>/dev/null || true
+            done
+          fi
 
           ${lib.optionalString cfg.cpu.disableIdleStates ''
             # Disable CPU idle states for lowest latency
