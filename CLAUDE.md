@@ -103,6 +103,7 @@ just clean       # GC generations >7 days
 just maintain    # Full: up -> fmt -> build -> cachix -> switch
 just secrets     # Edit SOPS secrets
 just repl        # Nix REPL with flake
+just init <name> # Init project with /run/secrets/ linked via .envrc
 ```
 
 ## Key Flake Inputs
