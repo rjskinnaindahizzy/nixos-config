@@ -124,28 +124,6 @@ maintain:
     just cachix-push "$OUT"
     just switch
 
-# Initialize a new project with secrets from /run/secrets/
-init name:
-    @bash -c ' \
-      set -euo pipefail; \
-      proj_dir="$HOME/Projects/{{name}}"; \
-      mkdir -p "$proj_dir"; \
-      touch "$proj_dir/.envrc"; \
-      echo "Created $proj_dir/.envrc"; \
-      echo ""; \
-      echo "Available secrets in /run/secrets/:"; \
-      ls /run/secrets/ 2>/dev/null || echo "  (none found)"; \
-      echo ""; \
-      while true; do \
-        read -p "Link a secret from /run/secrets/ (or leave blank to finish): " key; \
-        [ -z "$key" ] && break; \
-        echo "export $(echo $key | tr '\''[:lower:]'\'' '\''[:upper:]'\''')=\"\$(cat /run/secrets/$key 2>/dev/null)\"" >> "$proj_dir/.envrc"; \
-      done; \
-      echo ""; \
-      echo "✓ Project initialized at $proj_dir"; \
-      echo "  .envrc created with your selected secrets."; \
-      echo "  Run '\''direnv allow'\'' in the project directory to activate."'
-
 # Push a built output to Cachix (usage: just cachix-push /nix/store/...)
 cachix-push out:
     @if [ -f "/run/secrets/cachix_auth_token" ]; then \
