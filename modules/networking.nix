@@ -144,45 +144,42 @@ in
       };
     };
 
-    # Disable NetworkManager-wait-online.service to prevent boot delays
-    systemd.services.NetworkManager-wait-online.enable = false;
-
-    # Tailscale nftables backend
-    systemd.services.tailscaled.serviceConfig.Environment =
-      lib.mkIf config.modules.networking.tailscale.enable
-        [
-          "TS_DEBUG_FIREWALL_MODE=nftables"
-        ];
-
     # Required kernel module for Tailscale (not needed in initrd)
     boot.kernelModules = lib.mkIf config.modules.networking.tailscale.enable [ "tun" ];
 
-    # Tailscale + Samba + gvfs
-    services = {
-      tailscale = lib.mkIf config.modules.networking.tailscale.enable {
-        enable = true;
-        useRoutingFeatures = lib.mkDefault (
-          if config.modules.networking.tailscale.exitNode then "both" else "client"
-        );
-        extraUpFlags = [ "--accept-dns=true" ];
-        extraSetFlags = lib.mkIf config.modules.networking.tailscale.ssh [ "--ssh" ];
-      };
-      samba = lib.mkIf cfg.samba {
-        enable = true;
-        usershares.enable = true;
-        settings = {
-          global = {
-            "server min protocol" = "SMB2";
-            "server smb encrypt" = "desired";
-            "socket options" = "TCP_NODELAY IPTOS_LOWDELAY SO_RCVBUF=131072 SO_SNDBUF=131072";
-            "min receivefile size" = 16384;
-            "use sendfile" = "yes";
-            "aio read size" = 16384;
-            "aio write size" = 16384;
+    systemd = {
+      services = {
+        NetworkManager-wait-online.enable = false;
+
+        tailscaled.serviceConfig.Environment =
+          lib.mkIf config.modules.networking.tailscale.enable
+            [ "TS_DEBUG_FIREWALL_MODE=nftables" ];
+
+        cifs-resume = lib.mkIf cifsCfg.enable {
+          description = "Reset CIFS mounts after sleep/resume";
+          after = [
+            "suspend.target"
+            "hibernate.target"
+            "hybrid-sleep.target"
+          ];
+          wantedBy = [
+            "suspend.target"
+            "hibernate.target"
+            "hybrid-sleep.target"
+          ];
+          serviceConfig = {
+            Type = "oneshot";
+            ExecStart = pkgs.writeShellScript "cifs-resume" ''
+              # Force unmount stale CIFS mounts
+              ${lib.concatMapStringsSep "\n" (
+                mount: "${pkgs.util-linux}/bin/umount -l ${mount.mountPoint} 2>/dev/null || true"
+              ) (lib.attrValues cifsCfg.mounts)}
+              # Restart sops-nix to re-decrypt secrets
+              ${pkgs.systemd}/bin/systemctl restart sops-nix || true
+            '';
           };
         };
       };
-      gvfs.enable = lib.mkIf (cifsCfg.enable && cifsCfg.guiBrowsing) true;
     };
 
     # SOPS secrets for SMB credentials
@@ -243,31 +240,5 @@ in
         }
       ) cifsCfg.mounts
     );
-
-    # Reset CIFS mounts after sleep/resume (secrets in ramfs may become stale)
-    systemd.services.cifs-resume = lib.mkIf cifsCfg.enable {
-      description = "Reset CIFS mounts after sleep/resume";
-      after = [
-        "suspend.target"
-        "hibernate.target"
-        "hybrid-sleep.target"
-      ];
-      wantedBy = [
-        "suspend.target"
-        "hibernate.target"
-        "hybrid-sleep.target"
-      ];
-      serviceConfig = {
-        Type = "oneshot";
-        ExecStart = pkgs.writeShellScript "cifs-resume" ''
-          # Force unmount stale CIFS mounts
-          ${lib.concatMapStringsSep "\n" (
-            mount: "${pkgs.util-linux}/bin/umount -l ${mount.mountPoint} 2>/dev/null || true"
-          ) (lib.attrValues cifsCfg.mounts)}
-          # Restart sops-nix to re-decrypt secrets
-          ${pkgs.systemd}/bin/systemctl restart sops-nix || true
-        '';
-      };
-    };
   };
 }
