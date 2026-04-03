@@ -147,16 +147,6 @@ in
     # Disable NetworkManager-wait-online.service to prevent boot delays
     systemd.services.NetworkManager-wait-online.enable = false;
 
-    # Tailscale
-    services.tailscale = lib.mkIf config.modules.networking.tailscale.enable {
-      enable = true;
-      useRoutingFeatures = lib.mkDefault (
-        if config.modules.networking.tailscale.exitNode then "both" else "client"
-      );
-      extraUpFlags = [ "--accept-dns=true" ];
-      extraSetFlags = lib.mkIf config.modules.networking.tailscale.ssh [ "--ssh" ];
-    };
-
     # Tailscale nftables backend
     systemd.services.tailscaled.serviceConfig.Environment =
       lib.mkIf config.modules.networking.tailscale.enable
@@ -167,40 +157,44 @@ in
     # Required kernel module for Tailscale (not needed in initrd)
     boot.kernelModules = lib.mkIf config.modules.networking.tailscale.enable [ "tun" ];
 
-    # Samba server
-    services.samba = lib.mkIf cfg.samba {
-      enable = true;
-      usershares.enable = true;
-      settings = {
-        global = {
-          "server min protocol" = "SMB2";
-          "server smb encrypt" = "desired";
-          # Optimization
-          "socket options" = "TCP_NODELAY IPTOS_LOWDELAY SO_RCVBUF=131072 SO_SNDBUF=131072";
-          "min receivefile size" = 16384;
-          "use sendfile" = "yes";
-          "aio read size" = 16384;
-          "aio write size" = 16384;
+    # Tailscale + Samba + gvfs
+    services = {
+      tailscale = lib.mkIf config.modules.networking.tailscale.enable {
+        enable = true;
+        useRoutingFeatures = lib.mkDefault (
+          if config.modules.networking.tailscale.exitNode then "both" else "client"
+        );
+        extraUpFlags = [ "--accept-dns=true" ];
+        extraSetFlags = lib.mkIf config.modules.networking.tailscale.ssh [ "--ssh" ];
+      };
+      samba = lib.mkIf cfg.samba {
+        enable = true;
+        usershares.enable = true;
+        settings = {
+          global = {
+            "server min protocol" = "SMB2";
+            "server smb encrypt" = "desired";
+            "socket options" = "TCP_NODELAY IPTOS_LOWDELAY SO_RCVBUF=131072 SO_SNDBUF=131072";
+            "min receivefile size" = 16384;
+            "use sendfile" = "yes";
+            "aio read size" = 16384;
+            "aio write size" = 16384;
+          };
         };
       };
+      gvfs.enable = lib.mkIf (cifsCfg.enable && cifsCfg.guiBrowsing) true;
     };
-
-    # CIFS client (Windows network shares)
-    environment.systemPackages = lib.mkIf cifsCfg.enable [ pkgs.cifs-utils ];
-
-    # gvfs for GUI file manager browsing (Dolphin smb:// URLs)
-    services.gvfs.enable = lib.mkIf (cifsCfg.enable && cifsCfg.guiBrowsing) true;
 
     # SOPS secrets for SMB credentials
     sops.secrets = lib.mkIf cifsCfg.enable {
       smb_username = {
-        sopsFile = cifsCfg.sopsFile;
+        inherit (cifsCfg) sopsFile;
       };
       smb_password = {
-        sopsFile = cifsCfg.sopsFile;
+        inherit (cifsCfg) sopsFile;
       };
       smb_domain = {
-        sopsFile = cifsCfg.sopsFile;
+        inherit (cifsCfg) sopsFile;
       };
     };
 
