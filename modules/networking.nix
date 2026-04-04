@@ -151,9 +151,9 @@ in
       services = {
         NetworkManager-wait-online.enable = false;
 
-        tailscaled.serviceConfig.Environment =
-          lib.mkIf config.modules.networking.tailscale.enable
-            [ "TS_DEBUG_FIREWALL_MODE=nftables" ];
+        tailscaled.serviceConfig.Environment = lib.mkIf config.modules.networking.tailscale.enable [
+          "TS_DEBUG_FIREWALL_MODE=nftables"
+        ];
 
         cifs-resume = lib.mkIf cifsCfg.enable {
           description = "Reset CIFS mounts after sleep/resume";
@@ -212,7 +212,7 @@ in
     # Generate fileSystems entries for each mount
     fileSystems = lib.mkIf cifsCfg.enable (
       lib.mapAttrs' (
-        name: mount:
+        _: mount:
         lib.nameValuePair mount.mountPoint {
           device = "//${mount.server}/${mount.share}";
           fsType = "cifs";

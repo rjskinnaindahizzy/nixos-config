@@ -211,13 +211,14 @@ in
       extraModprobeConfig =
         lib.mkIf (cfg.nvidia.performance && (config.modules.nvidia.enable or false))
           ''
-            # RTX 3060 Mobile performance options
-            options nvidia NVreg_UsePageAttributeTable=1
-            options nvidia NVreg_InitializeSystemMemoryAllocations=1
-            options nvidia NVreg_DynamicPowerManagement=0
-            options nvidia NVreg_EnableGpuFirmware=0
-            options nvidia NVreg_RegistryDwords="PowerMizerEnable=0x1;PerfLevelSrc=0x2222;PowerMizerLevel=0x3"
-            options nvidia-drm modeset=1 fbdev=1
+            
+                        # RTX 3060 Mobile performance options
+                        options nvidia NVreg_UsePageAttributeTable=1
+                        options nvidia NVreg_InitializeSystemMemoryAllocations=1
+                        options nvidia NVreg_DynamicPowerManagement=0
+                        options nvidia NVreg_EnableGpuFirmware=0
+                        options nvidia NVreg_RegistryDwords="PowerMizerEnable=0x1;PerfLevelSrc=0x2222;PowerMizerLevel=0x3"
+                        options nvidia-drm modeset=1 fbdev=1
           '';
     };
   };

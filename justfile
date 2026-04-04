@@ -61,10 +61,7 @@ up:
 # Format all Nix files (Fast & Targeted)
 fmt:
     @echo "Formatting Nix files..."
-    @files=$(fd -e nix -t f); \
-    if [ -n "$files" ]; then \
-      nixfmt -- $files; \
-    fi
+    @nix fmt $(fd -e nix -t f)
     @echo "✓ Formatting complete."
 
 # Run flake checks (linters, tests)
@@ -77,10 +74,7 @@ lint-nix:
 
 # Nix formatting check (fast)
 fmt-check:
-    @files=$(fd -e nix -t f); \
-    if [ -n "$files" ]; then \
-      nixfmt --check -- $files; \
-    fi
+    @nix fmt -- --check $(fd -e nix -t f)
 
 # Show flake outputs
 flake-show:
