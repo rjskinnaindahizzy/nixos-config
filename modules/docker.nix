@@ -34,7 +34,6 @@
       enableOnBoot = lib.mkDefault config.modules.docker.enableOnBoot;
     };
 
-    # NVIDIA Container Toolkit (new way, replaces deprecated enableNvidia)
     hardware.nvidia-container-toolkit.enable = lib.mkDefault config.modules.docker.nvidia;
 
     # Suppress NVIDIA driver assertion in VM builds where drivers aren't present
