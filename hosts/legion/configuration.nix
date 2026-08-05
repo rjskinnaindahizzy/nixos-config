@@ -10,6 +10,8 @@
 let
   userName = "user";
   userHome = "/home/${userName}";
+  secretsFile = ./secrets.yaml;
+  hasSecrets = builtins.pathExists secretsFile;
 in
 {
   imports = [
@@ -46,7 +48,7 @@ in
       # CIFS client for Windows network shares
       cifsClient = {
         enable = true;
-        sopsFile = ./secrets.yaml;
+        sopsFile = secretsFile;
         guiBrowsing = true; # Enables smb:// in Dolphin
 
         mounts.share = {
@@ -251,8 +253,8 @@ in
 
     secrets = {
       # Cachix token (optional): decrypted to /run/secrets/cachix_auth_token
-      cachix_auth_token = lib.mkIf (builtins.pathExists ./secrets.yaml) {
-        sopsFile = ./secrets.yaml;
+      cachix_auth_token = lib.mkIf hasSecrets {
+        sopsFile = secretsFile;
         key = "cachix_auth_token";
         owner = "user";
         group = "users";
@@ -260,8 +262,8 @@ in
       };
 
       # Morph API key: decrypted to /run/secrets/morph_api_key
-      morph_api_key = lib.mkIf (builtins.pathExists ./secrets.yaml) {
-        sopsFile = ./secrets.yaml;
+      morph_api_key = lib.mkIf hasSecrets {
+        sopsFile = secretsFile;
         key = "morph_api_key";
         owner = "user";
         group = "users";
