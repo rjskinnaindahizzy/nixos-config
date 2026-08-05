@@ -169,6 +169,8 @@
 
       # Checks
       checks.${system} = {
+        development-test = pkgs.nixosTest (import ./modules/development.test.nix { inherit pkgs; });
+
         lint-nix =
           pkgs.runCommand "lint-nix"
             {
