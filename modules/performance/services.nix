@@ -21,14 +21,32 @@ in
         };
         script = ''
 
-          # Set CPU governor
-          for c in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do
-            [ -w "$c" ] && echo ${cfg.cpu.governor} > "$c" 2>/dev/null || true
-          done
+          # Apply per-CPU performance settings
+          for cpu_dir in /sys/devices/system/cpu/cpu[0-9]*; do
+            # Set CPU governor
+            [ -w "$cpu_dir/cpufreq/scaling_governor" ] && \
+              echo ${cfg.cpu.governor} > "$cpu_dir/cpufreq/scaling_governor" 2>/dev/null || true
 
-          # Set energy performance preference (AMD P-State)
-          for c in /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference; do
-            [ -w "$c" ] && echo performance > "$c" 2>/dev/null || true
+            # Set energy performance preference (AMD P-State)
+            [ -w "$cpu_dir/cpufreq/energy_performance_preference" ] && \
+              echo performance > "$cpu_dir/cpufreq/energy_performance_preference" 2>/dev/null || true
+
+            # Disable energy bias for maximum performance
+            [ -w "$cpu_dir/power/energy_perf_bias" ] && \
+              echo 0 > "$cpu_dir/power/energy_perf_bias" 2>/dev/null || true
+
+            # Set minimum frequency to maximum (force high clocks)
+            if [ -w "$cpu_dir/cpufreq/scaling_min_freq" ]; then
+              max_freq=$(cat "$cpu_dir/cpufreq/cpuinfo_max_freq" 2>/dev/null)
+              [ -n "$max_freq" ] && echo "$max_freq" > "$cpu_dir/cpufreq/scaling_min_freq" 2>/dev/null || true
+            fi
+
+            ${lib.optionalString cfg.cpu.disableIdleStates ''
+              # Disable CPU idle states for lowest latency
+              for state in "$cpu_dir"/cpuidle/state*/disable; do
+                [ -w "$state" ] && echo 1 > "$state" 2>/dev/null || true
+              done
+            ''}
           done
 
           # Enable CPU boost
@@ -38,27 +56,6 @@ in
           # AMD P-State status
           [ -w /sys/devices/system/cpu/amd_pstate/status ] && \
             echo active > /sys/devices/system/cpu/amd_pstate/status 2>/dev/null || true
-
-          # Disable energy bias for maximum performance
-          for c in /sys/devices/system/cpu/cpu*/power/energy_perf_bias; do
-            [ -w "$c" ] && echo 0 > "$c" 2>/dev/null || true
-          done
-
-          # Set minimum frequency to maximum (force high clocks)
-          for c in /sys/devices/system/cpu/cpu*/cpufreq/scaling_min_freq; do
-            if [ -w "$c" ]; then
-              max_freq=$(cat "''${c%scaling_min_freq}cpuinfo_max_freq" 2>/dev/null)
-              [ -n "$max_freq" ] && echo "$max_freq" > "$c" 2>/dev/null || true
-            fi
-          done
-
-          ${lib.optionalString cfg.cpu.disableIdleStates ''
-
-            # Disable CPU idle states for lowest latency
-            for state in /sys/devices/system/cpu/cpu*/cpuidle/state*/disable; do
-              [ -w "$state" ] && echo 1 > "$state" 2>/dev/null || true
-            done
-          ''}
 
           echo "CPU performance optimization applied"
         '';
