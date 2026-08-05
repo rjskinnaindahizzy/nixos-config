@@ -1,6 +1,7 @@
 {
   config,
   pkgs,
+  userName,
   ...
 }:
 
@@ -17,8 +18,8 @@
   };
 
   home = {
-    username = "user";
-    homeDirectory = "/home/user";
+    username = userName;
+    homeDirectory = "/home/${userName}";
     stateVersion = "25.05";
 
     # Packages that don't need configuration can stay here

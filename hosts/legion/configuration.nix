@@ -5,10 +5,10 @@
   inputs,
   cachixConfig,
   lib,
+  userName,
   ...
 }:
 let
-  userName = "user";
   userHome = "/home/${userName}";
   secretsFile = ./secrets.yaml;
   hasSecrets = builtins.pathExists secretsFile;
@@ -256,7 +256,7 @@ in
       cachix_auth_token = lib.mkIf hasSecrets {
         sopsFile = secretsFile;
         key = "cachix_auth_token";
-        owner = "user";
+        owner = userName;
         group = "users";
         mode = "0400";
       };
@@ -265,7 +265,7 @@ in
       morph_api_key = lib.mkIf hasSecrets {
         sopsFile = secretsFile;
         key = "morph_api_key";
-        owner = "user";
+        owner = userName;
         group = "users";
         mode = "0400";
       };
