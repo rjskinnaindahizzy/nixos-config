@@ -32,6 +32,7 @@
       home-manager,
       sops-nix,
       nix-index-database,
+      impermanence,
       ...
     }@inputs:
     let
