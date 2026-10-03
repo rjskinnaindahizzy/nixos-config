@@ -4,6 +4,7 @@
     ./development.nix
     ./docker.nix
     ./gaming.nix
+    ./impermanence.nix
     ./networking.nix
     ./nix-settings.nix
     ./nvidia.nix

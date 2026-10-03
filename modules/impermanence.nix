@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  userName,
   ...
 }:
 {
@@ -25,7 +26,7 @@
         "/var/lib/docker"
       ] ++ lib.optionals config.modules.virtualization.enable [
         "/var/lib/libvirt"
-      ] ++ lib.optionals config.modules.desktop.bluetooth.enable [
+      ] ++ lib.optionals config.hardware.bluetooth.enable [
         "/var/lib/bluetooth"
       ] ++ lib.optionals config.services.flatpak.enable [
         "/var/lib/flatpak"
@@ -37,7 +38,7 @@
 
     # Home-manager level persistence via NixOS module (avoids duplicate module imports)
     programs.fuse.userAllowOther = true;
-    environment.persistence."/persist".users.${config.userName} = {
+    environment.persistence."/persist".users.${userName} = {
       directories = [
         "Downloads"
         "Music"
