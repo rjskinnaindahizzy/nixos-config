@@ -81,6 +81,8 @@ in
     # Gaming
     gaming.enable = true;
 
+    impermanence.enable = true;
+
     # Virtualization
     virtualization.enable = true;
 
@@ -155,17 +157,39 @@ in
 
       # LUKS encrypted drives with performance optimizations
       luks.devices = {
-        "luks-f7c806f1-c985-45c3-b584-7f8411ae04fb" = {
-          device = "/dev/disk/by-uuid/f7c806f1-c985-45c3-b584-7f8411ae04fb";
-          allowDiscards = true; # Enable TRIM for SSD
-          bypassWorkqueues = true; # Bypass dm-crypt workqueues for lower latency
-        };
         "luks-a2b1aae2-b634-4d58-8848-5edda9a86c9b" = {
           device = "/dev/disk/by-uuid/a2b1aae2-b634-4d58-8848-5edda9a86c9b";
           allowDiscards = true;
           bypassWorkqueues = true;
         };
       };
+
+      supportedFilesystems = [ "btrfs" ];
+      postDeviceCommands = lib.mkAfter ''
+        mkdir -p /btrfs_tmp
+        mount -t btrfs /dev/mapper/luks-f7c806f1-c985-45c3-b584-7f8411ae04fb /btrfs_tmp
+
+        if [[ -e /btrfs_tmp/root ]]; then
+            mkdir -p /btrfs_tmp/old_roots
+            timestamp=$(date --date="@$(stat -c %Y /btrfs_tmp/root)" "+%Y-%m-%d_%H:%M:%S")
+            mv /btrfs_tmp/root "/btrfs_tmp/old_roots/$timestamp"
+        fi
+
+        delete_subvolume_recursively() {
+            IFS=$'\n'
+            for i in $(btrfs subvolume list -o "$1" | cut -f 9- -d ' '); do
+                delete_subvolume_recursively "/btrfs_tmp/$i"
+            done
+            btrfs subvolume delete "$1"
+        }
+
+        for i in $(find /btrfs_tmp/old_roots/ -maxdepth 1 -mtime +30); do
+            delete_subvolume_recursively "$i"
+        done
+
+        btrfs subvolume create /btrfs_tmp/root
+        umount /btrfs_tmp
+      '';
 
       # Systemd in initrd disabled to fix Logitech boot lag
       # Reverts to script-based initrd to avoid loading buggy hid-logitech-hidpp early
@@ -196,17 +220,16 @@ in
     memoryPercent = 50;
   };
 
-  # Windows partition auto-mount (NTFS on secondary NVMe)
+  # Games partition auto-mount (exFAT on secondary NVMe)
   fileSystems."/mnt/windows" = {
-    device = "/dev/disk/by-uuid/5AD43252D432311D";
-    fsType = "ntfs"; # Use ntfs-3g (FUSE) instead of ntfs3 kernel driver to avoid boot hangs
+    device = "/dev/disk/by-uuid/4893-3761";
+    fsType = "exfat";
     options = [
       "uid=1000"
       "gid=100"
       "umask=022"
       "nofail"
       "noatime"
-      "windows_names"
       "x-systemd.automount"
     ];
   };
@@ -247,8 +270,7 @@ in
   #─────────────────────────────────────────────────────────────────────────────
   sops = {
     age = {
-      keyFile = "${userHome}/.config/sops/age/keys.txt";
-      sshKeyPaths = [ "${userHome}/.ssh/id_ed25519" ];
+      keyFile = "/persist${userHome}/.config/sops/age/keys.txt";
     };
 
     secrets = {
@@ -275,9 +297,11 @@ in
   #─────────────────────────────────────────────────────────────────────────────
   # User
   #─────────────────────────────────────────────────────────────────────────────
+  users.mutableUsers = false;
   users.users.${userName} = {
     isNormalUser = true;
     description = userName;
+    hashedPasswordFile = "/persist/secrets/user-password";
     extraGroups = [
       "networkmanager"
       "wheel"

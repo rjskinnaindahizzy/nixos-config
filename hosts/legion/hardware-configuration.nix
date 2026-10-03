@@ -24,6 +24,8 @@
       kernelModules = [ ];
       luks.devices."luks-f7c806f1-c985-45c3-b584-7f8411ae04fb" = {
         device = "/dev/disk/by-uuid/f7c806f1-c985-45c3-b584-7f8411ae04fb";
+        allowDiscards = true;
+        bypassWorkqueues = true;
       };
     };
 
@@ -33,7 +35,21 @@
 
   fileSystems."/" = {
     device = "/dev/mapper/luks-f7c806f1-c985-45c3-b584-7f8411ae04fb";
-    fsType = "ext4";
+    fsType = "btrfs";
+    options = [ "subvol=root" "compress=zstd" "noatime" ];
+  };
+
+  fileSystems."/nix" = {
+    device = "/dev/mapper/luks-f7c806f1-c985-45c3-b584-7f8411ae04fb";
+    fsType = "btrfs";
+    options = [ "subvol=nix" "compress=zstd" "noatime" ];
+  };
+
+  fileSystems."/persist" = {
+    device = "/dev/mapper/luks-f7c806f1-c985-45c3-b584-7f8411ae04fb";
+    fsType = "btrfs";
+    options = [ "subvol=persist" "compress=zstd" "noatime" ];
+    neededForBoot = true;
   };
 
   fileSystems."/boot" = {
