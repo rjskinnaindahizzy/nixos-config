@@ -27,6 +27,7 @@
       kdePackages.kate
       obsidian
       vscodium-fhs
+      bubblewrap
       flatpak
       kdePackages.discover
       kdePackages.flatpak-kcm
