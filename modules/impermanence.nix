@@ -47,19 +47,12 @@
         "Projects"
         ".ssh"
         ".gnupg"
-        ".local/share/keyrings"
-        ".local/share/direnv"
-        ".local/share/Steam"
-        ".config/discord"
         ".mozilla"
-        # Persist KDE Plasma settings given they scatter across .config and .local/share
-        ".config/KDE"
-        ".config/kde.org"
-        ".local/share/plasma"
-        ".local/share/kscreen"
-        ".local/share/kio"
-        ".local/share/kxmlgui5"
-        ".local/share/kwalletd"
+        # Persist all app configs and local data to prevent KDE and app resets.
+        # Cruft like ~/.cache, ~/.npm, and scattered ~ files will still be wiped.
+        ".config"
+        ".local/share"
+        ".local/state"
       ];
       files = [
         ".bash_history"
