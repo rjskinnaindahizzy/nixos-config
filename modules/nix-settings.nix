@@ -37,7 +37,7 @@
     cuda = lib.mkOption {
       type = lib.types.bool;
       default = false;
-      description = "Enable CUDA maintainers cache";
+      description = "Deprecated: cuda-maintainers cache is defunct (uses nix-community instead)";
     };
 
     # GC settings
@@ -92,16 +92,16 @@
         # Build substituters list
         substituters = [
           "https://cache.nixos.org"
+          "https://nix-community.cachix.org"
         ]
-        ++ lib.optional config.modules.nix-settings.cuda "https://cuda-maintainers.cachix.org"
         ++ lib.optional (
           config.modules.nix-settings.cachix.enable && config.modules.nix-settings.cachix.name != ""
         ) "https://${config.modules.nix-settings.cachix.name}.cachix.org";
 
         trusted-public-keys = [
           "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
+          "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
         ]
-        ++ lib.optional config.modules.nix-settings.cuda "cuda-maintainers.cachix.org-1:0dq3bujKpuEPMCX6U4WylrUDZ9JyUG0VpVZa7CNfq5E="
         ++ lib.optional (
           config.modules.nix-settings.cachix.enable && config.modules.nix-settings.cachix.publicKey != ""
         ) config.modules.nix-settings.cachix.publicKey;

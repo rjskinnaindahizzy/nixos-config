@@ -184,7 +184,6 @@ modules.development = {
 ```nix
 modules.nix-settings = {
   enable = true;
-  cuda = true;  # cuda-maintainers cache
   cachix = cachixConfig; # From flake.nix
   gc.days = 7;
 };

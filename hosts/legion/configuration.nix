@@ -25,7 +25,6 @@ in
     # Nix settings with caches
     nix-settings = {
       enable = true;
-      cuda = true;
       cachix = cachixConfig; # Passed from flake.nix
       gc.days = 7;
     };
