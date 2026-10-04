@@ -1,6 +1,7 @@
 # Legion 15ACH6H - Host Configuration
 # All heavy lifting done by modules, this file is host-specific settings only
 {
+  config,
   pkgs,
   inputs,
   cachixConfig,
@@ -270,9 +271,18 @@ in
     };
   };
 
-  # Only execute restic backup if the PowerEdge CIFS share is actually mounted
-  systemd.services."restic-backups-persist".unitConfig = {
-    ConditionPathIsMountPoint = "/mnt/share";
+  # Restic must not run against a stale CIFS mount. The kernel can keep
+  # /mnt/share listed for ~180s after the PowerEdge server disappears
+  # ("CIFS: VFS: ... has not responded in 180 seconds"), and because the share
+  # uses automount the mountpoint can survive as an autofs trap. So require the
+  # mountpoint AND probe TCP/445. An ExecCondition exiting non-zero (but not 255)
+  # skips the unit as "condition failed" instead of stalling the backup.
+  systemd.services."restic-backups-persist" = {
+    unitConfig.ConditionPathIsMountPoint = "/mnt/share";
+    serviceConfig.ExecCondition = pkgs.writeShellScript "restic-smb-reachable" ''
+      # The probe's exit status becomes the script's status: 0 means reachable.
+      ${pkgs.coreutils}/bin/timeout 3 ${pkgs.bash}/bin/bash -c "exec 3<>/dev/tcp/${config.modules.networking.cifsClient.mounts.share.server}/445" 2>/dev/null
+    '';
   };
 
   # Programs
