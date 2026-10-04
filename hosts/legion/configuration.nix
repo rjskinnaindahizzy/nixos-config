@@ -10,7 +10,7 @@
 }:
 let
   userHome = "/home/${userName}";
-  secretsFile = "${userHome}/nixos-config/hosts/legion/secrets.yaml";
+  secretsFile = "/persist/system/nixos-config/hosts/legion/secrets.yaml";
   hasSecrets = true;
 in
 {
@@ -278,7 +278,7 @@ in
         enable = true;
         extraArgs = "--keep-since 7d --keep 5";
       };
-      flake = "/persist/home/user/nixos-config";
+      flake = "/etc/nixos";
     };
     nix-index.enable = true;
     nix-index-database.comma.enable = true;

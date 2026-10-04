@@ -126,8 +126,8 @@ init name:
       mkdir -p "$proj_dir"; \
       touch "$proj_dir/.envrc"; \
       echo "Created $proj_dir/.envrc"; \
-      cp "$HOME/nixos-config/AGENTS.md" "$proj_dir/" 2>/dev/null || echo "Warning: AGENTS.md not found"; \
-      cp "$HOME/nixos-config/CODING_STANDARDS.md" "$proj_dir/" 2>/dev/null || echo "Warning: CODING_STANDARDS.md not found"; \
+      cp "/etc/nixos/AGENTS.md" "$proj_dir/" 2>/dev/null || echo "Warning: AGENTS.md not found"; \
+      cp "/etc/nixos/CODING_STANDARDS.md" "$proj_dir/" 2>/dev/null || echo "Warning: CODING_STANDARDS.md not found"; \
       echo ""; \
       echo "Available secrets in /run/secrets/:"; \
       ls /run/secrets/ 2>/dev/null || echo "  (none found)"; \

@@ -37,8 +37,7 @@
       just
     ];
 
-    file."justfile".source =
-      config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nixos-config/justfile";
+    file."justfile".source = config.lib.file.mkOutOfStoreSymlink "/etc/nixos/justfile";
   };
 
   home.sessionPath = [
