@@ -109,7 +109,7 @@
       channel.enable = false;
       daemonCPUSchedPolicy = "batch";
       daemonIOSchedPriority = 5;
-
+      nixPath = [ "nixpkgs=flake:nixpkgs" ];
       registry = lib.optionalAttrs (inputs != null && inputs ? nixpkgs) {
         nixpkgs.flake = inputs.nixpkgs;
         p.flake = inputs.nixpkgs;

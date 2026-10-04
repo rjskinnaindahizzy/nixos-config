@@ -176,14 +176,16 @@ in
         fi
 
         delete_subvolume_recursively() {
+            local old_ifs="$IFS"
             IFS=$'\n'
             for i in $(btrfs subvolume list -o "$1" | cut -f 9- -d ' '); do
                 delete_subvolume_recursively "/btrfs_tmp/$i"
             done
+            IFS="$old_ifs"
             btrfs subvolume delete "$1"
         }
 
-        for i in $(find /btrfs_tmp/old_roots/ -maxdepth 1 -mtime +30); do
+        for i in $(find /btrfs_tmp/old_roots/ -mindepth 1 -maxdepth 1 -mtime +30); do
             delete_subvolume_recursively "$i"
         done
 
@@ -230,6 +232,7 @@ in
       "umask=022"
       "nofail"
       "noatime"
+      "noauto"
       "x-systemd.automount"
     ];
   };
@@ -298,19 +301,24 @@ in
   #─────────────────────────────────────────────────────────────────────────────
   # User
   #─────────────────────────────────────────────────────────────────────────────
-  users.mutableUsers = false;
-  users.users.${userName} = {
-    isNormalUser = true;
-    description = userName;
-    hashedPasswordFile = "/persist/secrets/user-password";
-    extraGroups = [
-      "networkmanager"
-      "wheel"
-      "docker"
-      "libvirtd"
-      "samba"
-      "sambashare"
-    ];
+  users = {
+    mutableUsers = false;
+    users = {
+      root.hashedPasswordFile = "/persist/secrets/user-password";
+      ${userName} = {
+        isNormalUser = true;
+        description = userName;
+        hashedPasswordFile = "/persist/secrets/user-password";
+        extraGroups = [
+          "networkmanager"
+          "wheel"
+          "docker"
+          "libvirtd"
+          "samba"
+          "sambashare"
+        ];
+      };
+    };
   };
 
   #─────────────────────────────────────────────────────────────────────────────

@@ -3,8 +3,6 @@
 {
   imports = [ ./base.nix ];
 
-  modules.performance.memory.hugepages = {
-    enable = true;
-    count = 4;
-  };
+  # Rely on Transparent HugePages (configured in base.nix) rather than static 1GB HugeTLB pages
+  modules.performance.memory.hugepages.enable = false;
 }

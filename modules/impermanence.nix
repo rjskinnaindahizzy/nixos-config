@@ -13,8 +13,8 @@
     # Force the display manager to wait for Home Manager to finish linking files
     # This prevents KDE from booting into an empty, wiped home directory.
     systemd.services.display-manager = {
-      after = [ "home-manager-user.service" ];
-      wants = [ "home-manager-user.service" ];
+      after = [ "home-manager-${userName}.service" ];
+      wants = [ "home-manager-${userName}.service" ];
     };
 
     # System-level persistence
@@ -49,6 +49,10 @@
       ];
       files = [
         "/etc/machine-id"
+        "/etc/ssh/ssh_host_ed25519_key"
+        "/etc/ssh/ssh_host_ed25519_key.pub"
+        "/etc/ssh/ssh_host_rsa_key"
+        "/etc/ssh/ssh_host_rsa_key.pub"
       ];
     };
 

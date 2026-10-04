@@ -46,16 +46,8 @@
       modesetting.enable = lib.mkDefault true;
       nvidiaSettings = lib.mkDefault true;
       package = lib.mkDefault config.boot.kernelPackages.nvidiaPackages.production;
-      # Disable power management when performance module is active (mkForce to override nixos-hardware)
-      powerManagement.enable =
-        if
-          (
-            config.modules.performance.enable or false && config.modules.performance.nvidia.performance or false
-          )
-        then
-          lib.mkForce false
-        else
-          lib.mkDefault true;
+      # Power management enabled for proper suspend/resume with VRAM preservation
+      powerManagement.enable = lib.mkDefault true;
       powerManagement.finegrained = lib.mkDefault false;
       open = lib.mkForce config.modules.nvidia.openDriver;
       # Enable persistence daemon for performance module

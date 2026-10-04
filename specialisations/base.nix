@@ -7,7 +7,7 @@
     cpu = {
       governor = "performance";
       amdPstate = true;
-      isolation.enable = true;
+      isolation.enable = false;
       disableIdleStates = true;
     };
     memory = {
