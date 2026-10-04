@@ -10,7 +10,7 @@
 }:
 let
   userHome = "/home/${userName}";
-  secretsFile = "/persist/home/user/nixos-config/hosts/legion/secrets.yaml";
+  secretsFile = "${userHome}/nixos-config/hosts/legion/secrets.yaml";
   hasSecrets = true;
 in
 {
@@ -218,7 +218,10 @@ in
     btrfs.autoScrub = {
       enable = true;
       interval = "monthly";
-      fileSystems = [ "/persist" ];
+      fileSystems = [
+        "/persist"
+        "/home"
+      ];
     };
 
     earlyoom = {
@@ -235,12 +238,16 @@ in
     restic.backups."persist" = {
       repository = "/mnt/share/Backups/legion-restic";
       passwordFile = "/persist/secrets/restic-password";
-      paths = [ "/persist" ];
+      paths = [
+        "/persist"
+        "/home"
+      ];
       exclude = [
-        "/persist/home/*/.cache"
-        "/persist/home/*/.local/share/Steam"
-        "/persist/home/*/.local/share/Trash"
-        "/persist/home/*/Downloads"
+        "/home/*/.cache"
+        "/home/*/.local/share/Steam"
+        "/home/*/.local/share/Trash"
+        "/home/*/Downloads"
+        "/home/*/.var/app/*/cache"
         "/persist/tmp"
         "/persist/btrfs_tmp"
       ];
@@ -344,8 +351,8 @@ in
     defaultSopsFile = secretsFile;
     validateSopsFiles = false;
     age = {
-      keyFile = "/persist${userHome}/.config/sops/age/keys.txt";
-      sshKeyPaths = lib.optional (builtins.pathExists "/persist${userHome}/.ssh/id_ed25519") "/persist${userHome}/.ssh/id_ed25519";
+      keyFile = "/persist/secrets/sops-keys.txt";
+      sshKeyPaths = lib.optional (builtins.pathExists "${userHome}/.ssh/id_ed25519") "${userHome}/.ssh/id_ed25519";
     };
 
     secrets = {

@@ -6,7 +6,7 @@
 }:
 {
   options.modules.impermanence = {
-    enable = lib.mkEnableOption "impermanence for ephemeral root and home";
+    enable = lib.mkEnableOption "impermanence for ephemeral root";
   };
 
   config = lib.mkIf config.modules.impermanence.enable {
@@ -57,34 +57,5 @@
       ];
     };
 
-    # Home-manager level persistence via NixOS module (avoids duplicate module imports)
-    environment.persistence."/persist".users.${userName} = {
-      directories = [
-        "Desktop"
-        "Downloads"
-        "Music"
-        "Pictures"
-        "Documents"
-        "Videos"
-        "Projects"
-        {
-          directory = ".ssh";
-          mode = "0700";
-        }
-        {
-          directory = ".gnupg";
-          mode = "0700";
-        }
-        ".mozilla"
-        # Cruft like ~/.cache, ~/.npm, and scattered ~ files will still be wiped.
-        ".config"
-        ".local/share"
-        ".local/state"
-      ];
-      files = [
-        ".bash_history"
-        ".zsh_history"
-      ];
-    };
   };
 }

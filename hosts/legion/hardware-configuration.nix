@@ -66,6 +66,16 @@
       neededForBoot = true;
     };
 
+    "/home" = {
+      device = "/dev/mapper/luks-f7c806f1-c985-45c3-b584-7f8411ae04fb";
+      fsType = "btrfs";
+      options = [
+        "subvol=home"
+        "compress=zstd"
+        "noatime"
+      ];
+    };
+
     "/boot" = {
       device = "/dev/disk/by-uuid/38BE-2BE4";
       fsType = "vfat";
