@@ -131,7 +131,7 @@ in
       timeout = 1;
     };
 
-    kernelPackages = pkgs.linuxPackages;
+    kernelPackages = pkgs.linuxPackages_zen;
     kernelParams = [
       "tsc=nowatchdog"
       "debugfs=on"
