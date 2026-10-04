@@ -34,9 +34,11 @@
       glow
       kdePackages.spectacle
       mangohud
+      just
     ];
 
-    # Simple dotfiles that don't warrant a module
+    file."justfile".source =
+      config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nixos-config/justfile";
   };
 
   home.sessionPath = [
