@@ -3,6 +3,8 @@ result
 result-*
 .direnv/
 .venv/
+*.qcow2
+.envrc
 node_modules/
 
 # Secrets & Keys (CRITICAL)

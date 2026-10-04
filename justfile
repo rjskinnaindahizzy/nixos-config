@@ -1,152 +1,149 @@
 # Legion NixOS Management
 set shell := ["bash", "-c"]
+set working-directory := "/etc/nixos"
+
+flake := "/etc/nixos"
 
 # List available commands
 default:
     @just --list
 
+#─────────────────────────────────────────────────────────────────────────────
+# System Lifecycle (Powered by nh with visual build trees & diffs)
+#─────────────────────────────────────────────────────────────────────────────
+
 # Apply configuration to the running system
 switch:
-    sudo nixos-rebuild switch --flake .#legion
+    nh os switch {{flake}}
 
-# Edit the shell configuration
-shell:
-    ${EDITOR:-vim} modules/home/shell.nix
+# Test configuration without modifying bootloader
+test:
+    nh os test {{flake}}
 
-# Edit encrypted system secrets (SOPS)
-secrets:
-    sops hosts/legion/secrets.yaml
-
-# Build but do not switch (Dry Run)
+# Build configuration without activating (Dry Run)
 build:
-    nix build .#nixosConfigurations.legion.config.system.build.toplevel
+    nh os build {{flake}}
 
-# Enable performance profile
+# Rollback to the previous NixOS generation
+rollback:
+    nh os rollback
+
+# Switch to uncapped performance profile (Zen kernel, 130W GPU, clock offsets)
 perf:
-    sudo nixos-rebuild switch --flake .#legion --specialisation performance
+    nh os switch {{flake}} -s performance
 
-# Enable balanced profile (performance disabled)
-bal:
-    sudo nixos-rebuild switch --flake .#legion
+# Return to standard default profile (LTS kernel, quiet fans, full mitigations)
+normal:
+    nh os switch {{flake}}
 
-# Enable LLM profile (includes HugePages)
-llm:
-    sudo nixos-rebuild switch --flake .#legion --specialisation llm
-
-
-# Build VM only
-build-vm:
-    nixos-rebuild build-vm --flake .#legion
-
-# Build and run a VM of the configuration with hardware acceleration
+# Build and run a sandboxed VM with hardware acceleration (isolated in /tmp)
 vm:
     @bash -c ' \
       set -euo pipefail; \
-      just build-vm; \
-      QEMU_AUDIO_DRV=pa ./result/bin/run-legion-vm || true; \
-      echo ""; \
-      read -p "VM closed. Self-destruct VM artifacts (result/ and disks)? [y/N]: " cleanup; \
-      if [[ $cleanup == [Yy]* ]]; then \
-        rm -rf result legion.qcow2; \
-        echo "✓ VM artifacts destroyed."; \
-      else \
-        echo "Keeping VM artifacts."; \
-      fi'
+      tmpdir=$(mktemp -d /tmp/nixos-vm.XXXXXX); \
+      trap "rm -rf \"$tmpdir\" result" EXIT; \
+      nh os build-vm {{flake}}; \
+      cd "$tmpdir"; \
+      echo "Launching VM with hardware acceleration..."; \
+      QEMU_AUDIO_DRV=pa "/etc/nixos/result/bin/run-legion-vm" -snapshot || true; \
+      echo "✓ VM session closed. Temporary storage wiped."'
 
-# Update flake.lock and verify
+#─────────────────────────────────────────────────────────────────────────────
+# Maintenance & Code Quality
+#─────────────────────────────────────────────────────────────────────────────
+
+# Update flake.lock inputs and verify evaluations
 up:
     nix flake update
-    nix flake check
+    nix flake check --no-build
 
-# Format all Nix files (Fast & Targeted)
+# Format all Nix files
 fmt:
-    @echo "Formatting Nix files..."
-    @nix fmt $(fd -e nix -t f)
-    @echo "✓ Formatting complete."
+    nix fmt
 
-# Run flake checks (linters, tests)
+# Run complete linter and test suite (statix, deadnix, nixfmt, VM test)
 check:
-    nix flake check
-
-# Run Nix lint checks only (statix, deadnix, nixfmt --check)
-lint-nix:
+    nix flake check --no-build
     nix build .#checks.x86_64-linux.lint-nix
+    @rm -f result
 
-# Nix formatting check (fast)
-fmt-check:
-    @nix fmt -- --check $(fd -e nix -t f)
-
-# Show flake outputs
-flake-show:
-    nix flake show
-
-# Show flake metadata (inputs, revisions)
-flake-metadata:
-    nix flake metadata
-
-# Enter default dev shell
-dev:
-    nix develop
-
-# Enter CUDA dev shell
-dev-cuda:
-    nix develop .#cuda
-
-# Evaluate a flake attribute (usage: just eval .#attr)
-eval attr:
-    nix eval {{attr}}
-
-# Garbage collect old generations (Keep last 7 days)
+# Garbage collect old generations (keeps last 5 generations)
 clean:
-    @echo "Warning: garbage collection is already scheduled via nix.gc; this is manual."
-    sudo nix-collect-garbage --delete-older-than 7d
+    sudo nh clean all --keep 5
 
-# Open Nix REPL with flake loaded (Debug context)
-repl:
-    nix repl --expr "builtins.getFlake \"$PWD\""
-
-# Tail system logs (Errors only)
-logs:
-    journalctl -p 3 -xb -f
-
-# Full Maintenance: Update -> Format -> Check -> Push Cache -> Switch
+# Full automated maintenance pipeline: Update -> Format -> Lint -> Switch
 maintain:
     just up
     just fmt
-    @echo "Building system..."
-    @OUT=$(nix build .#nixosConfigurations.legion.config.system.build.toplevel --print-out-paths) && \
-    just cachix-push "$OUT"
+    just check
     just switch
 
-# Initialize a new project with secrets from /run/secrets/
-init name:
+#─────────────────────────────────────────────────────────────────────────────
+# Storage & Backup Operations
+#─────────────────────────────────────────────────────────────────────────────
+
+# Trigger immediate Restic backup to PowerEdge server (/mnt/share)
+backup:
+    sudo systemctl start restic-backups-persist.service
+    @systemctl status restic-backups-persist.service --no-pager
+
+# Check backup timer and last run logs
+backup-status:
+    @systemctl status restic-backups-persist.timer --no-pager
+    @echo ""
+    @journalctl -u restic-backups-persist.service -n 25 --no-pager
+
+# Trigger manual Btrfs scrub on /persist and /home
+scrub:
+    sudo systemctl start btrfs-scrub-persist.service btrfs-scrub-home.service
+    @echo "Scrub started. Check progress: sudo btrfs scrub status /persist && sudo btrfs scrub status /home"
+
+#─────────────────────────────────────────────────────────────────────────────
+# Development & System Introspection
+#─────────────────────────────────────────────────────────────────────────────
+
+# Edit encrypted secrets (SOPS)
+secrets:
+    sops hosts/legion/secrets.yaml
+
+# Enter default developer shell
+dev:
+    nix develop
+
+# Enter CUDA developer shell
+dev-cuda:
+    nix develop .#cuda
+
+# Open interactive Nix REPL with system configuration loaded
+repl:
+    nh os repl {{flake}}
+
+# Safely evaluate a flake attribute with strict parameter sanitization
+eval attr:
     @bash -c ' \
       set -euo pipefail; \
-      proj_dir="$HOME/Projects/{{name}}"; \
-      mkdir -p "$proj_dir"; \
-      touch "$proj_dir/.envrc"; \
-      echo "Created $proj_dir/.envrc"; \
-      cp "/etc/nixos/AGENTS.md" "$proj_dir/" 2>/dev/null || echo "Warning: AGENTS.md not found"; \
-      cp "/etc/nixos/CODING_STANDARDS.md" "$proj_dir/" 2>/dev/null || echo "Warning: CODING_STANDARDS.md not found"; \
-      echo ""; \
-      echo "Available secrets in /run/secrets/:"; \
-      ls /run/secrets/ 2>/dev/null || echo "  (none found)"; \
-      echo ""; \
-      while true; do \
-        read -p "Link a secret from /run/secrets/ (or leave blank to finish): " key; \
-        [ -z "$key" ] && break; \
-        echo "export $(echo $key | tr '\''[:lower:]'\'' '\''[:upper:]'\''')=\"\$(cat /run/secrets/$key 2>/dev/null)\"" >> "$proj_dir/.envrc"; \
-      done; \
-      echo ""; \
-      echo "✓ Project initialized at $proj_dir"; \
-      echo "  .envrc created with your selected secrets."; \
-      echo "  Run '\''direnv allow'\'' in the project directory to activate."'
+      arg="$1"; \
+      if [[ ! "$arg" =~ ^[a-zA-Z0-9_#.-]+$ ]]; then \
+        echo "Error: Invalid Nix attribute syntax: $arg" >&2; \
+        exit 1; \
+      fi; \
+      nix eval ".#$arg"' _ {{quote(attr)}}
 
-# Push a built output to Cachix (usage: just cachix-push /nix/store/...)
-cachix-push out:
-    @if [ -f "/run/secrets/cachix_auth_token" ]; then \
-        echo "Pushing to Cachix..."; \
-        CACHIX_AUTH_TOKEN=$(cat /run/secrets/cachix_auth_token) cachix push rjskinnaindahizzy {{out}}; \
-    else \
-        echo "No Cachix token found. Skipping push."; \
-    fi
+# System health and hardware telemetry overview
+status:
+    @echo "=== ACTIVE GENERATION ==="
+    @readlink -f /run/current-system
+    @echo ""
+    @echo "=== KERNEL & NETWORK SCHEDULER ==="
+    @uname -r
+    @sysctl kernel.split_lock_mitigate net.core.default_qdisc
+    @echo ""
+    @echo "=== NVIDIA GPU STATE ==="
+    @nvidia-smi --query-gpu=pstate,power.draw,clocks.gr,clocks.mem,temperature.gpu --format=csv 2>/dev/null || echo "NVIDIA driver inactive"
+    @echo ""
+    @echo "=== SYSTEM TIMERS ==="
+    @systemctl is-active restic-backups-persist.timer btrfs-scrub-persist.timer btrfs-scrub-home.timer earlyoom.service
+
+# Tail critical system logs
+logs:
+    journalctl -p 3 -xb -f

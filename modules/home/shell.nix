@@ -210,6 +210,9 @@
       venv/
       target/
       Cargo.lock
+      .envrc
+      .direnv/
+      *.qcow2
       vendor/
       dist/
       build/
