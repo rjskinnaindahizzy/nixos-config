@@ -12,11 +12,17 @@ default:
 # System Lifecycle (Powered by nh with visual build trees & diffs)
 #─────────────────────────────────────────────────────────────────────────────
 
-# Show which profile the NEXT boot will use (specialisations need a reboot;
-# the tuned profile differs from the default by kernel + mitigations, which no
-# runtime switch can apply)
+# Show which profile the NEXT boot will use
 profile:
-    @bash -c 'if grep -q "^default nixos-generation-.*-specialisation-performance.conf" /boot/loader/loader.conf 2>/dev/null; then echo "NEXT BOOT: PERFORMANCE (Zen kernel, mitigations=off)"; else echo "NEXT BOOT: STANDARD (LTS kernel, mitigations on)"; fi'
+    @bash -c 'sudo grep "^default " /boot/loader/loader.conf 2>/dev/null | grep -q "specialisation-performance" && echo "NEXT BOOT: PERFORMANCE (Zen kernel, mitigations=off)" || echo "NEXT BOOT: STANDARD (LTS kernel, mitigations on)"'
+
+# Select the boot entry for the NEXT boot without rebooting now.
+# Usage: just boot-profile [standard|performance]
+# NOTE: the performance entry only exists if the current generation was built
+# with the specialisation declared (it is, see hosts/legion/configuration.nix).
+boot-profile target:
+    @bash -c 'esp=/boot/loader/entries; gen=$(sudo ls "$esp" | grep -oE "^nixos-generation-[0-9]+\.conf$" | grep -oE "[0-9]+" | sort -n | tail -1); if [ -z "$gen" ]; then echo "ERROR: no boot entries found under $esp (need sudo)" >&2; exit 1; fi; case "{{target}}" in standard) entry="nixos-generation-$gen.conf";; performance) entry="nixos-generation-$gen-specialisation-performance.conf";; *) echo "Usage: just boot-profile [standard|performance]" >&2; exit 1;; esac; if ! sudo test -f "$esp/$entry"; then echo "ERROR: boot entry not found: $entry" >&2; exit 1; fi; sudo sed -i "s|^default .*|default $entry|" /boot/loader/loader.conf; echo "next boot: $entry"'
+    @just profile
 
 # Apply configuration to the running system
 switch:
@@ -44,7 +50,7 @@ vm:
       nh os build-vm {{flake}}; \
       cd "$tmpdir"; \
       echo "Launching VM with hardware acceleration..."; \
-      QEMU_AUDIO_DRV=pa "/etc/nixos/result/bin/run-legion-vm" -snapshot || true; \
+      QEMU_AUDIO_DRV=pa "/persist/system/nixos-config/result/bin/run-legion-vm" -snapshot || true; \
       echo "✓ VM session closed. Temporary storage wiped."'
 
 #─────────────────────────────────────────────────────────────────────────────

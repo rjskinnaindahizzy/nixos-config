@@ -102,9 +102,21 @@ in
     # NOTE: the runtime `specialisation.performance` switch was removed. It only
     # activated userspace (governor/THP/services) while the real gains live in
     # kernel boot params (mitigations=off, Zen scheduler) that require a reboot.
-    # To run the tuned profile, set `performance.enable = true` above and reboot;
-    # benchmarked difference at runtime was within noise (see /home/user/bench).
+    # Benchmarked difference at runtime was within noise (see /home/user/bench).
+
+    # The PERFORMANCE BOOT ENTRY is kept, though: it is what makes the tuned
+    # profile selectable from the systemd-boot menu (and switchable via
+    # `just boot-profile performance`). A boot entry is only a kernel+initrd
+    # choice - unlike the runtime switch, nothing rewrites sysfs at boot, so it
+    # cannot leave pinned-core residue behind.
   };
+
+  # The performance BOOT ENTRY is kept: it makes the tuned profile selectable
+  # from the systemd-boot menu (and switchable via `just boot-profile
+  # performance`). A boot entry is only a kernel+initrd choice - unlike the
+  # removed runtime switch, nothing rewrites sysfs at boot, so it cannot leave
+  # pinned-core residue behind.
+  specialisation.performance.configuration.imports = [ ../../specialisations/performance.nix ];
   #─────────────────────────────────────────────────────────────────────────────
   # Boot (Host-specific)
   #─────────────────────────────────────────────────────────────────────────────
