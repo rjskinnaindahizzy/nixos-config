@@ -12,17 +12,14 @@ default:
 # System Lifecycle (Powered by nh with visual build trees & diffs)
 #─────────────────────────────────────────────────────────────────────────────
 
-# Show which specialisation is currently active (performance vs standard)
+# Show which profile the NEXT boot will use (specialisations need a reboot;
+# the tuned profile differs from the default by kernel + mitigations, which no
+# runtime switch can apply)
 profile:
-    @bash -c 'if systemctl is-active -q cpu-performance.service; then echo "PERFORMANCE (Zen kernel + tuned CPU/GPU)"; else echo "STANDARD (default LTS kernel)"; fi'
+    @bash -c 'if grep -q "^default nixos-generation-.*-specialisation-performance.conf" /boot/loader/loader.conf 2>/dev/null; then echo "NEXT BOOT: PERFORMANCE (Zen kernel, mitigations=off)"; else echo "NEXT BOOT: STANDARD (LTS kernel, mitigations on)"; fi'
 
 # Apply configuration to the running system
 switch:
-    nh os switch {{flake}}
-    @just profile
-
-# Return to standard default profile (LTS kernel, quiet fans, full mitigations)
-normal:
     nh os switch {{flake}}
     @just profile
 
@@ -37,11 +34,6 @@ build:
 # Rollback to the previous NixOS generation
 rollback:
     nh os rollback
-
-# Switch to uncapped performance profile (Zen kernel, 130W GPU, clock offsets)
-perf:
-    nh os switch {{flake}} -s performance
-    @just profile
 
 # Build and run a sandboxed VM with hardware acceleration (isolated in /tmp)
 vm:
@@ -137,8 +129,8 @@ eval attr:
 
 # System health and hardware telemetry overview
 status:
-    @echo "=== ACTIVE PROFILE ==="
-    @bash -c 'if [ -e /run/current-system/specialisation/performance ] && readlink /run/current-system/specialisation/performance >/dev/null && systemctl is-active -q cpu-performance.service; then echo "PERFORMANCE (Zen kernel + tuned CPU/GPU)"; else echo "STANDARD (default LTS kernel)"; fi'
+    @echo "=== PROFILE (next boot) ==="
+    @just profile
     @echo "=== ACTIVE GENERATION ==="
     @readlink -f /run/current-system
     @echo ""

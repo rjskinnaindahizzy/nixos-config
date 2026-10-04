@@ -99,13 +99,12 @@ in
       nix-ld = true;
     };
 
-    # Performance (Arch Linux Legion 5 optimizations) - Balanced by default
-    performance.enable = false;
+    # NOTE: the runtime `specialisation.performance` switch was removed. It only
+    # activated userspace (governor/THP/services) while the real gains live in
+    # kernel boot params (mitigations=off, Zen scheduler) that require a reboot.
+    # To run the tuned profile, set `performance.enable = true` above and reboot;
+    # benchmarked difference at runtime was within noise (see /home/user/bench).
   };
-
-  # Performance specialisation (extracted to specialisations/)
-  specialisation.performance.configuration.imports = [ ../../specialisations/performance.nix ];
-
   #─────────────────────────────────────────────────────────────────────────────
   # Boot (Host-specific)
   #─────────────────────────────────────────────────────────────────────────────
