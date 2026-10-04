@@ -81,6 +81,12 @@
       };
     };
 
+    # Exclude default KDE applications
+    environment.plasma6.excludePackages = with pkgs.kdePackages; [
+      kate
+      ktexteditor
+    ];
+
     # Bluetooth
     hardware.bluetooth.enable = lib.mkDefault true;
 
