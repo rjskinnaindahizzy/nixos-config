@@ -50,16 +50,34 @@
   # Enable Home Manager
   programs.home-manager.enable = true;
 
-  # Enable XDG standards
-  xdg.enable = true;
+  # XDG configuration
+  xdg = {
+    enable = true;
 
-  # Disable KWallet entirely. With auto-login there is no PAM password to unlock
-  # a wallet, so kwalletd6 blocks on org.kde.KWallet.isEnabled/open and callers
-  # (Chromium) stall ~25s per call. "Enabled=false" makes kwalletd6 exit
-  # immediately, so callers fail fast. Secrets are covered by LUKS FDE + sops-nix.
-  xdg.configFile."kwalletrc".text = ''
-    [Wallet]
-    Enabled=false
-    First Use=false
-  '';
+    # Disable KWallet entirely. With auto-login there is no PAM password to unlock
+    # a wallet, so kwalletd6 blocks on org.kde.KWallet.isEnabled/open and callers
+    # (Chromium) stall ~25s per call. "Enabled=false" makes kwalletd6 exit
+    # immediately, so callers fail fast. Secrets are covered by LUKS FDE + sops-nix.
+    configFile."kwalletrc".text = ''
+      [Wallet]
+      Enabled=false
+      First Use=false
+    '';
+
+    # Hide dead or redundant application launchers from Start Menu
+    desktopEntries = {
+      kwalletmanager5-kwalletd = {
+        name = "KWalletManager";
+        noDisplay = true;
+      };
+      "org.kde.kwalletmanager" = {
+        name = "KWalletManager";
+        noDisplay = true;
+      };
+      "remote-viewer" = {
+        name = "Remote Viewer";
+        noDisplay = true;
+      };
+    };
+  };
 }

@@ -44,6 +44,7 @@
     services = {
       xserver = {
         enable = true;
+        excludePackages = [ pkgs.xterm ];
         xkb = {
           layout = lib.mkDefault "us";
           variant = lib.mkDefault "";
@@ -85,6 +86,7 @@
     environment.plasma6.excludePackages = with pkgs.kdePackages; [
       kate
       ktexteditor
+      khelpcenter
     ];
 
     # Bluetooth
