@@ -444,26 +444,8 @@ in
     jq
     ripgrep
 
-    # Security scanning
-    vulnix
-
     # GUI security tools (CLI tools in devShell)
     burpsuite
-    # KWallet is disabled system-wide (see hosts/legion/home.nix -> kwalletrc),
-    # so pin Chromium's password store to skip D-Bus secret-service probing
-    # (each blocking org.kde.KWallet call previously stalled startup ~25s).
-    ((chromium.override { commandLineArgs = "--password-store=basic"; }).overrideAttrs (old: {
-      postInstall = (old.postInstall or "") + ''
-        sed -i '/^@@EXTRA_DESKTOP_ENTRIES@@$/d' \
-          $out/share/applications/chromium-browser.desktop
-      '';
-    }))
-
-    # Benchmark Tools
-    sysbench
-    fio
-    rt-tests
-    stress-ng
 
     # System monitoring tools
     lm_sensors

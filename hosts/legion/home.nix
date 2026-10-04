@@ -24,9 +24,7 @@
 
     # Packages that don't need configuration can stay here
     packages = with pkgs; [
-      kdePackages.kate
       obsidian
-      vscodium-fhs
       bubblewrap
       flatpak
       kdePackages.discover
