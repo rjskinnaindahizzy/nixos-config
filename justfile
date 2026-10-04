@@ -14,7 +14,7 @@ default:
 
 # Show which profile the NEXT boot will use
 profile:
-    @bash -c 'sudo grep "^default " /boot/loader/loader.conf 2>/dev/null | grep -q "specialisation-performance" && echo "NEXT BOOT: PERFORMANCE (Zen kernel, mitigations off, Red LED)" || echo "NEXT BOOT: STANDARD (Zen kernel, mitigations on, White LED)"'
+    @bash -c 'sudo grep "^default " /boot/loader/loader.conf 2>/dev/null | grep -q "specialisation-performance" && echo "NEXT BOOT: PERFORMANCE (Zen kernel, mitigations off, Red LED)" || echo "NEXT BOOT: STANDARD (Mainline kernel, mitigations on, White LED)"'
 
 # Select the boot entry for the NEXT boot without rebooting now.
 # Usage: just boot-profile [standard|performance]
