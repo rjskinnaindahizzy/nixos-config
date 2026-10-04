@@ -298,7 +298,7 @@ in
         enable = true;
         extraArgs = "--keep-since 7d --keep 5";
       };
-      flake = "/etc/nixos";
+      flake = "/persist/system/nixos-config";
     };
     nix-index.enable = true;
     nix-index-database.comma.enable = true;

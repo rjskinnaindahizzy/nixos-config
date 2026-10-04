@@ -1,8 +1,8 @@
 # Legion NixOS Management
 set shell := ["bash", "-c"]
-set working-directory := "/etc/nixos"
+set working-directory := "/persist/system/nixos-config"
 
-flake := "/etc/nixos"
+flake := "/persist/system/nixos-config"
 
 # List available commands
 default:
@@ -48,7 +48,7 @@ vm:
     @bash -c ' \
       set -euo pipefail; \
       tmpdir=$(mktemp -d /tmp/nixos-vm.XXXXXX); \
-      trap "rm -rf \"$tmpdir\" /etc/nixos/result" EXIT; \
+      trap "rm -rf \"$tmpdir\" /persist/system/nixos-config/result" EXIT; \
       nh os build-vm {{flake}}; \
       cd "$tmpdir"; \
       echo "Launching VM with hardware acceleration..."; \
