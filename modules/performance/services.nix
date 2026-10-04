@@ -9,10 +9,175 @@ let
   cfg = config.modules.performance;
 in
 {
-  config = lib.mkIf cfg.enable {
-    systemd.services = {
-      cpu-performance = {
-        description = "AMD Ryzen 7 5800H Performance Optimization";
+  config = lib.mkMerge [
+    (lib.mkIf cfg.enable {
+      systemd.services = {
+        cpu-performance = {
+          description = "AMD Ryzen 7 5800H Performance Optimization";
+          wantedBy = [ "multi-user.target" ];
+          after = [ "systemd-modules-load.service" ];
+          serviceConfig = {
+            Type = "oneshot";
+            RemainAfterExit = true;
+          };
+          script = ''
+
+            # Apply per-CPU performance settings
+            for cpu_dir in /sys/devices/system/cpu/cpu[0-9]*; do
+              # Set CPU governor
+              [ -w "$cpu_dir/cpufreq/scaling_governor" ] && \
+                echo ${cfg.cpu.governor} > "$cpu_dir/cpufreq/scaling_governor" 2>/dev/null || true
+
+              # Set energy performance preference (AMD P-State)
+              [ -w "$cpu_dir/cpufreq/energy_performance_preference" ] && \
+                echo performance > "$cpu_dir/cpufreq/energy_performance_preference" 2>/dev/null || true
+
+              # Disable energy bias for maximum performance
+              [ -w "$cpu_dir/power/energy_perf_bias" ] && \
+                echo 0 > "$cpu_dir/power/energy_perf_bias" 2>/dev/null || true
+
+              # Set minimum frequency to maximum (force high clocks)
+              if [ -w "$cpu_dir/cpufreq/scaling_min_freq" ]; then
+                max_freq=$(cat "$cpu_dir/cpufreq/cpuinfo_max_freq" 2>/dev/null)
+                [ -n "$max_freq" ] && echo "$max_freq" > "$cpu_dir/cpufreq/scaling_min_freq" 2>/dev/null || true
+              fi
+
+              ${lib.optionalString cfg.cpu.disableIdleStates ''
+                # Disable CPU idle states for lowest latency
+                for state in "$cpu_dir"/cpuidle/state*/disable; do
+                  [ -w "$state" ] && echo 1 > "$state" 2>/dev/null || true
+                done
+              ''}
+            done
+
+            # Enable CPU boost
+            [ -w /sys/devices/system/cpu/cpufreq/boost ] && \
+              echo 1 > /sys/devices/system/cpu/cpufreq/boost 2>/dev/null || true
+
+            # AMD P-State status
+            [ -w /sys/devices/system/cpu/amd_pstate/status ] && \
+              echo active > /sys/devices/system/cpu/amd_pstate/status 2>/dev/null || true
+
+            # Set ACPI Platform Profile to performance (Red LED, unlocks 130W GPU & full fan tables)
+            [ -w /sys/firmware/acpi/platform_profile ] && \
+              echo performance > /sys/firmware/acpi/platform_profile 2>/dev/null || true
+
+            echo "CPU performance optimization applied"
+          '';
+        };
+
+        irq-performance = lib.mkIf cfg.irq.affinity {
+          description = "IRQ Performance Tuning for AMD Ryzen 7 5800H";
+          wantedBy = [ "multi-user.target" ];
+          after = [ "cpu-performance.service" ];
+          requires = [ "cpu-performance.service" ];
+          serviceConfig = {
+            Type = "oneshot";
+            RemainAfterExit = true;
+          };
+          script =
+            let
+              # Housekeeping cores mask: 0x3f = cores 0-5
+              affinityMask = if cfg.cpu.isolation.enable then "3f" else "ffff";
+            in
+            ''
+
+              # Set default IRQ affinity
+              [ -w /proc/irq/default_smp_affinity ] && \
+                echo ${affinityMask} > /proc/irq/default_smp_affinity 2>/dev/null || true
+
+              # Pin all existing IRQs
+              for irq in /proc/irq/*/smp_affinity; do
+                [ -w "$irq" ] && echo ${affinityMask} > "$irq" 2>/dev/null || true
+              done
+
+              # Set maximum IRQ thread priorities
+              ${pkgs.procps}/bin/pgrep -f '\[irq/' | ${pkgs.findutils}/bin/xargs -r -n 1 -P 0 ${pkgs.util-linux}/bin/chrt -f -p 99 2>/dev/null || true
+
+              # Network RPS optimization
+              for iface in /sys/class/net/*/queues/rx-*/rps_cpus; do
+                [ -w "$iface" ] && echo ${affinityMask} > "$iface" 2>/dev/null || true
+              done
+
+              # Network XPS optimization
+              for iface in /sys/class/net/*/queues/tx-*/xps_cpus; do
+                [ -w "$iface" ] && echo ${affinityMask} > "$iface" 2>/dev/null || true
+              done
+
+              echo "IRQ affinity optimization applied"
+            '';
+        };
+
+        memory-performance = {
+          description = "Memory Performance Optimization";
+          wantedBy = [ "multi-user.target" ];
+          serviceConfig = {
+            Type = "oneshot";
+            RemainAfterExit = true;
+          };
+          script = ''
+
+            # Transparent HugePages
+            [ -w /sys/kernel/mm/transparent_hugepage/enabled ] && \
+              echo ${cfg.memory.transparentHugepages} > /sys/kernel/mm/transparent_hugepage/enabled 2>/dev/null || true
+
+            # THP defrag mode
+            [ -w /sys/kernel/mm/transparent_hugepage/defrag ] && \
+              echo defer+madvise > /sys/kernel/mm/transparent_hugepage/defrag 2>/dev/null || true
+
+            ${lib.optionalString cfg.memory.hugepages.enable ''
+
+              # Allocate 1GB HugePages
+              [ -w /sys/kernel/mm/hugepages/hugepages-1048576kB/nr_hugepages ] && \
+                echo ${toString cfg.memory.hugepages.count} > /sys/kernel/mm/hugepages/hugepages-1048576kB/nr_hugepages 2>/dev/null || true
+            ''}
+
+            # Compact memory to free up contiguous regions
+            [ -w /proc/sys/vm/compact_memory ] && \
+              echo 1 > /proc/sys/vm/compact_memory 2>/dev/null || true
+
+            echo "Memory performance optimization applied"
+          '';
+        };
+
+        nvidia-performance = lib.mkIf (cfg.nvidia.performance && (config.modules.nvidia.enable or false)) {
+          description = "NVIDIA RTX 3060 Mobile Performance Optimization";
+          wantedBy = [ "graphical.target" ];
+          after = [ "nvidia-persistenced.service" ];
+          wants = [ "nvidia-persistenced.service" ];
+          path = [ config.hardware.nvidia.package.bin ];
+          serviceConfig = {
+            Type = "oneshot";
+            RemainAfterExit = true;
+            ExecStartPre = "${config.hardware.nvidia.package.bin}/bin/nvidia-smi -L";
+            Restart = "on-failure";
+            RestartSec = "1s";
+          };
+          script = ''
+
+            ${lib.optionalString cfg.nvidia.persistenceMode ''
+
+              # Enable persistence mode
+              nvidia-smi -pm 1 2>/dev/null || true
+            ''}
+
+            # Set power limit (supported on RTX 3060 Mobile)
+            nvidia-smi -pl ${toString cfg.nvidia.powerLimit} 2>/dev/null || true
+
+            # NOTE: `nvidia-smi -ac` (application clocks) was removed. It is an
+            # enterprise-only feature and silently fails on consumer GeForce Mobile
+            # parts. Clock offsets are applied per-game by GameMode instead
+            # (nv_core_clock_mhz_offset/nv_mem_clock_mhz_offset in modules/gaming.nix).
+
+            echo "NVIDIA performance optimization applied"
+          '';
+        };
+      };
+    })
+
+    (lib.mkIf (!cfg.enable) {
+      systemd.services.platform-profile-balanced = {
+        description = "Lenovo Legion Balanced ACPI Profile (White LED)";
         wantedBy = [ "multi-user.target" ];
         after = [ "systemd-modules-load.service" ];
         serviceConfig = {
@@ -20,153 +185,12 @@ in
           RemainAfterExit = true;
         };
         script = ''
-
-          # Apply per-CPU performance settings
-          for cpu_dir in /sys/devices/system/cpu/cpu[0-9]*; do
-            # Set CPU governor
-            [ -w "$cpu_dir/cpufreq/scaling_governor" ] && \
-              echo ${cfg.cpu.governor} > "$cpu_dir/cpufreq/scaling_governor" 2>/dev/null || true
-
-            # Set energy performance preference (AMD P-State)
-            [ -w "$cpu_dir/cpufreq/energy_performance_preference" ] && \
-              echo performance > "$cpu_dir/cpufreq/energy_performance_preference" 2>/dev/null || true
-
-            # Disable energy bias for maximum performance
-            [ -w "$cpu_dir/power/energy_perf_bias" ] && \
-              echo 0 > "$cpu_dir/power/energy_perf_bias" 2>/dev/null || true
-
-            # Set minimum frequency to maximum (force high clocks)
-            if [ -w "$cpu_dir/cpufreq/scaling_min_freq" ]; then
-              max_freq=$(cat "$cpu_dir/cpufreq/cpuinfo_max_freq" 2>/dev/null)
-              [ -n "$max_freq" ] && echo "$max_freq" > "$cpu_dir/cpufreq/scaling_min_freq" 2>/dev/null || true
-            fi
-
-            ${lib.optionalString cfg.cpu.disableIdleStates ''
-              # Disable CPU idle states for lowest latency
-              for state in "$cpu_dir"/cpuidle/state*/disable; do
-                [ -w "$state" ] && echo 1 > "$state" 2>/dev/null || true
-              done
-            ''}
-          done
-
-          # Enable CPU boost
-          [ -w /sys/devices/system/cpu/cpufreq/boost ] && \
-            echo 1 > /sys/devices/system/cpu/cpufreq/boost 2>/dev/null || true
-
-          # AMD P-State status
-          [ -w /sys/devices/system/cpu/amd_pstate/status ] && \
-            echo active > /sys/devices/system/cpu/amd_pstate/status 2>/dev/null || true
-
-          echo "CPU performance optimization applied"
+          # Set ACPI Platform Profile to balanced (White LED, standard fan tables)
+          [ -w /sys/firmware/acpi/platform_profile ] && \
+            echo balanced > /sys/firmware/acpi/platform_profile 2>/dev/null || true
+          echo "ACPI platform profile set to balanced (White LED)"
         '';
       };
-
-      irq-performance = lib.mkIf cfg.irq.affinity {
-        description = "IRQ Performance Tuning for AMD Ryzen 7 5800H";
-        wantedBy = [ "multi-user.target" ];
-        after = [ "cpu-performance.service" ];
-        requires = [ "cpu-performance.service" ];
-        serviceConfig = {
-          Type = "oneshot";
-          RemainAfterExit = true;
-        };
-        script =
-          let
-            # Housekeeping cores mask: 0x3f = cores 0-5
-            affinityMask = if cfg.cpu.isolation.enable then "3f" else "ffff";
-          in
-          ''
-
-            # Set default IRQ affinity
-            [ -w /proc/irq/default_smp_affinity ] && \
-              echo ${affinityMask} > /proc/irq/default_smp_affinity 2>/dev/null || true
-
-            # Pin all existing IRQs
-            for irq in /proc/irq/*/smp_affinity; do
-              [ -w "$irq" ] && echo ${affinityMask} > "$irq" 2>/dev/null || true
-            done
-
-            # Set maximum IRQ thread priorities
-            ${pkgs.procps}/bin/pgrep -f '\[irq/' | ${pkgs.findutils}/bin/xargs -r -n 1 -P 0 ${pkgs.util-linux}/bin/chrt -f -p 99 2>/dev/null || true
-
-            # Network RPS optimization
-            for iface in /sys/class/net/*/queues/rx-*/rps_cpus; do
-              [ -w "$iface" ] && echo ${affinityMask} > "$iface" 2>/dev/null || true
-            done
-
-            # Network XPS optimization
-            for iface in /sys/class/net/*/queues/tx-*/xps_cpus; do
-              [ -w "$iface" ] && echo ${affinityMask} > "$iface" 2>/dev/null || true
-            done
-
-            echo "IRQ affinity optimization applied"
-          '';
-      };
-
-      memory-performance = {
-        description = "Memory Performance Optimization";
-        wantedBy = [ "multi-user.target" ];
-        serviceConfig = {
-          Type = "oneshot";
-          RemainAfterExit = true;
-        };
-        script = ''
-
-          # Transparent HugePages
-          [ -w /sys/kernel/mm/transparent_hugepage/enabled ] && \
-            echo ${cfg.memory.transparentHugepages} > /sys/kernel/mm/transparent_hugepage/enabled 2>/dev/null || true
-
-          # THP defrag mode
-          [ -w /sys/kernel/mm/transparent_hugepage/defrag ] && \
-            echo defer+madvise > /sys/kernel/mm/transparent_hugepage/defrag 2>/dev/null || true
-
-          ${lib.optionalString cfg.memory.hugepages.enable ''
-
-            # Allocate 1GB HugePages
-            [ -w /sys/kernel/mm/hugepages/hugepages-1048576kB/nr_hugepages ] && \
-              echo ${toString cfg.memory.hugepages.count} > /sys/kernel/mm/hugepages/hugepages-1048576kB/nr_hugepages 2>/dev/null || true
-          ''}
-
-          # Compact memory to free up contiguous regions
-          [ -w /proc/sys/vm/compact_memory ] && \
-            echo 1 > /proc/sys/vm/compact_memory 2>/dev/null || true
-
-          echo "Memory performance optimization applied"
-        '';
-      };
-
-      nvidia-performance = lib.mkIf (cfg.nvidia.performance && (config.modules.nvidia.enable or false)) {
-        description = "NVIDIA RTX 3060 Mobile Performance Optimization";
-        wantedBy = [ "graphical.target" ];
-        after = [ "nvidia-persistenced.service" ];
-        wants = [ "nvidia-persistenced.service" ];
-        path = [ config.hardware.nvidia.package.bin ];
-        serviceConfig = {
-          Type = "oneshot";
-          RemainAfterExit = true;
-          ExecStartPre = "${config.hardware.nvidia.package.bin}/bin/nvidia-smi -L";
-          Restart = "on-failure";
-          RestartSec = "1s";
-        };
-        script = ''
-
-          ${lib.optionalString cfg.nvidia.persistenceMode ''
-
-            # Enable persistence mode
-            nvidia-smi -pm 1 2>/dev/null || true
-          ''}
-
-          # Set power limit (supported on RTX 3060 Mobile)
-          nvidia-smi -pl ${toString cfg.nvidia.powerLimit} 2>/dev/null || true
-
-          # NOTE: `nvidia-smi -ac` (application clocks) was removed. It is an
-          # enterprise-only feature and silently fails on consumer GeForce Mobile
-          # parts. Clock offsets are applied per-game by GameMode instead
-          # (nv_core_clock_mhz_offset/nv_mem_clock_mhz_offset in modules/gaming.nix).
-
-          echo "NVIDIA performance optimization applied"
-        '';
-      };
-    };
-  };
+    })
+  ];
 }
