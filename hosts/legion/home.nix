@@ -34,6 +34,23 @@
       mangohud
       just
       sops
+      freerdp
+      (pkgs.writeShellScriptBin "rdp-poweredge" ''
+        exec ${pkgs.freerdp}/bin/xfreerdp \
+          /v:192.168.50.59 \
+          /u:user \
+          /network:lan \
+          /gfx:avc444 \
+          +fonts \
+          +aero \
+          +window-drag \
+          +menu-anims \
+          /dynamic-resolution \
+          +clipboard \
+          /sound:sys:pulse \
+          /bpp:32 \
+          "$@"
+      '')
     ];
 
     # NOTE: /etc/nixos is a SYMLINK to /persist/system/nixos-config, and
@@ -81,6 +98,18 @@
       "org.kde.kate" = {
         name = "Kate";
         noDisplay = true;
+      };
+      "rdp-poweredge" = {
+        name = "PowerEdge Remote Desktop";
+        genericName = "Windows Remote Desktop";
+        comment = "Connect to PowerEdge Windows via FreeRDP";
+        exec = "rdp-poweredge";
+        icon = "network-server";
+        categories = [
+          "Network"
+          "RemoteAccess"
+        ];
+        terminal = true;
       };
     };
     mimeApps = {

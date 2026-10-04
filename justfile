@@ -153,3 +153,7 @@ status:
 # Tail critical system logs
 logs:
     journalctl -p 3 -xb -f
+
+# Connect to PowerEdge Windows via tuned FreeRDP (60fps, AVC444, ClearType)
+rdp *args:
+    rdp-poweredge {{args}}
