@@ -181,6 +181,9 @@
         };
 
         cuda = pkgs.mkShell {
+          shellHook = ''
+            export LD_LIBRARY_PATH="/run/opengl-driver/lib:$LD_LIBRARY_PATH"
+          '';
           packages = with pkgs; [
             binutils
             gcc
