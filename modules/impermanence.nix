@@ -11,6 +11,13 @@
   };
 
   config = lib.mkIf config.modules.impermanence.enable {
+    # Force the display manager to wait for Home Manager to finish linking files
+    # This prevents KDE from booting into an empty, wiped home directory.
+    systemd.services.display-manager = {
+      after = [ "home-manager-user.service" ];
+      wants = [ "home-manager-user.service" ];
+    };
+
     # System-level persistence
     environment.persistence."/persist" = {
       hideMounts = true;
