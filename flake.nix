@@ -1,6 +1,16 @@
 {
   description = "Lenovo Legion 15ACH6H - Gaming + AI NixOS configuration";
 
+  nixConfig = {
+    extra-substituters = [
+      "https://cache.nixos.org"
+      "https://nix-community.cachix.org?priority=2"
+    ];
+    extra-trusted-public-keys = [
+      "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
+      "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
+    ];
+  };
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
     nixos-hardware.url = "github:NixOS/nixos-hardware";
@@ -17,6 +27,8 @@
 
     impermanence = {
       url = "github:nix-community/impermanence";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.home-manager.follows = "home-manager";
     };
 
     nix-index-database = {
@@ -109,6 +121,7 @@
           packages = with pkgs; [
             # Nix tooling
             nixfmt-rfc-style
+            shfmt
             nil
             statix
             deadnix
@@ -175,7 +188,7 @@
 
       # Checks
       checks.${system} = {
-        development-test = pkgs.nixosTest (import ./modules/development.test.nix { inherit pkgs; });
+        development-test = pkgs.testers.nixosTest (import ./modules/development.test.nix { inherit pkgs; });
 
         lint-nix =
           pkgs.runCommand "lint-nix"

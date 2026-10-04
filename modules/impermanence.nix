@@ -1,7 +1,6 @@
 {
   config,
   lib,
-  pkgs,
   userName,
   ...
 }:
@@ -26,16 +25,26 @@
         "/var/lib/nixos"
         "/var/lib/systemd/coredump"
         "/etc/NetworkManager/system-connections"
-        { directory = "/var/lib/colord"; user = "colord"; group = "colord"; mode = "u=rwx,g=rx,o="; }
-      ] ++ lib.optionals config.modules.networking.tailscale.enable [
+        {
+          directory = "/var/lib/colord";
+          user = "colord";
+          group = "colord";
+          mode = "u=rwx,g=rx,o=";
+        }
+      ]
+      ++ lib.optionals config.modules.networking.tailscale.enable [
         "/var/lib/tailscale"
-      ] ++ lib.optionals config.modules.docker.enable [
+      ]
+      ++ lib.optionals config.modules.docker.enable [
         "/var/lib/docker"
-      ] ++ lib.optionals config.modules.virtualization.enable [
+      ]
+      ++ lib.optionals config.modules.virtualization.enable [
         "/var/lib/libvirt"
-      ] ++ lib.optionals config.hardware.bluetooth.enable [
+      ]
+      ++ lib.optionals config.hardware.bluetooth.enable [
         "/var/lib/bluetooth"
-      ] ++ lib.optionals config.services.flatpak.enable [
+      ]
+      ++ lib.optionals config.services.flatpak.enable [
         "/var/lib/flatpak"
       ];
       files = [

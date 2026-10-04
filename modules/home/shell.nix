@@ -26,9 +26,23 @@
             excludesfile = "~/.gitignore_global";
           };
           init.defaultBranch = "main";
+          branch.sort = "-committerdate";
+          diff.colorMoved = "default";
+          fetch.prune = true;
+          merge = {
+            tool = "vimdiff";
+            conflictstyle = "diff3";
+          };
+          push = {
+            default = "simple";
+            autoSetupRemote = true;
+            followTags = true;
+          };
+          rebase = {
+            autoStash = true;
+            updateRefs = true;
+          };
           pull.rebase = false;
-          push.default = "simple";
-          merge.tool = "vimdiff";
           credential.helper = "!nix run nixpkgs#gh -- auth git-credential";
           alias = {
             st = "status";
@@ -70,6 +84,25 @@
           mitm = "mitmproxy";
           mitmweb = "mitmweb";
           ts = "date +%Y%m%d-%H%M%S";
+
+          # Git ergonomics (lovesegfault-style shortcuts)
+          g = "git";
+          ga = "git add";
+          gaa = "git add -A";
+          gap = "git add --patch";
+          gb = "git branch";
+          gco = "git checkout";
+          gcom = "git commit -m";
+          gcoa = "git commit --amend";
+          gdf = "git diff";
+          gdfs = "git diff --staged";
+          gl = "git log --oneline --graph --decorate";
+          gpl = "git pull --rebase";
+          gps = "git push";
+          grb = "git rebase";
+          gs = "git status";
+          gst = "git status";
+          gsw = "git switch";
         };
         initExtra = ''
           export BUN_INSTALL="$HOME/.bun"

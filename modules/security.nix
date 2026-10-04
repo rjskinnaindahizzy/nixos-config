@@ -39,8 +39,30 @@
 
     # General security settings (always apply)
     {
-      security.sudo.wheelNeedsPassword = config.modules.security.wheelNeedsPassword;
-      security.rtkit.enable = lib.mkDefault true; # Audio priority
+      security = {
+        sudo.wheelNeedsPassword = config.modules.security.wheelNeedsPassword;
+        rtkit.enable = lib.mkDefault true; # Audio priority
+        pam.loginLimits = [
+          {
+            domain = "*";
+            type = "-";
+            item = "memlock";
+            value = "unlimited";
+          }
+          {
+            domain = "*";
+            type = "-";
+            item = "nofile";
+            value = "1048576";
+          }
+          {
+            domain = "*";
+            type = "-";
+            item = "nproc";
+            value = "unlimited";
+          }
+        ];
+      };
     }
   ];
 }

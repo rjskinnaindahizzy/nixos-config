@@ -3,6 +3,7 @@
   config,
   lib,
   pkgs,
+  inputs ? null,
   ...
 }:
 {
@@ -86,7 +87,8 @@
         # Networking
         connect-timeout = 5;
         http2 = true;
-
+        http-connections = 32;
+        flake-registry = "/etc/nix/registry.json";
         # Build substituters list
         substituters = [
           "https://cache.nixos.org"
@@ -103,6 +105,14 @@
         ++ lib.optional (
           config.modules.nix-settings.cachix.enable && config.modules.nix-settings.cachix.publicKey != ""
         ) config.modules.nix-settings.cachix.publicKey;
+      };
+      channel.enable = false;
+      daemonCPUSchedPolicy = "batch";
+      daemonIOSchedPriority = 5;
+
+      registry = lib.optionalAttrs (inputs != null && inputs ? nixpkgs) {
+        nixpkgs.flake = inputs.nixpkgs;
+        p.flake = inputs.nixpkgs;
       };
 
       gc = lib.mkIf config.modules.nix-settings.gc.automatic {

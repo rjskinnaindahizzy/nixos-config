@@ -1,20 +1,17 @@
-{ pkgs, ... }:
-{
+_: {
   name = "development-module-test";
 
-  nodes.machine =
-    { pkgs, ... }:
-    {
-      imports = [ ./development.nix ];
-      modules.development = {
-        enable = true;
-        nix-ld = true;
-        languages = {
-          python = true;
-          nodejs = true;
-        };
+  nodes.machine = _: {
+    imports = [ ./development.nix ];
+    modules.development = {
+      enable = true;
+      nix-ld = true;
+      languages = {
+        python = true;
+        nodejs = true;
       };
     };
+  };
 
   testScript = ''
     machine.wait_for_unit("multi-user.target")

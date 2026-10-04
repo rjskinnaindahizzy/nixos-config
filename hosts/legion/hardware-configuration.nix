@@ -33,32 +33,46 @@
     extraModulePackages = [ ];
   };
 
-  fileSystems."/" = {
-    device = "/dev/mapper/luks-f7c806f1-c985-45c3-b584-7f8411ae04fb";
-    fsType = "btrfs";
-    options = [ "subvol=root" "compress=zstd" "noatime" ];
-  };
+  fileSystems = {
+    "/" = {
+      device = "/dev/mapper/luks-f7c806f1-c985-45c3-b584-7f8411ae04fb";
+      fsType = "btrfs";
+      options = [
+        "subvol=root"
+        "compress=zstd"
+        "noatime"
+      ];
+    };
 
-  fileSystems."/nix" = {
-    device = "/dev/mapper/luks-f7c806f1-c985-45c3-b584-7f8411ae04fb";
-    fsType = "btrfs";
-    options = [ "subvol=nix" "compress=zstd" "noatime" ];
-  };
+    "/nix" = {
+      device = "/dev/mapper/luks-f7c806f1-c985-45c3-b584-7f8411ae04fb";
+      fsType = "btrfs";
+      options = [
+        "subvol=nix"
+        "compress=zstd"
+        "noatime"
+      ];
+    };
 
-  fileSystems."/persist" = {
-    device = "/dev/mapper/luks-f7c806f1-c985-45c3-b584-7f8411ae04fb";
-    fsType = "btrfs";
-    options = [ "subvol=persist" "compress=zstd" "noatime" ];
-    neededForBoot = true;
-  };
+    "/persist" = {
+      device = "/dev/mapper/luks-f7c806f1-c985-45c3-b584-7f8411ae04fb";
+      fsType = "btrfs";
+      options = [
+        "subvol=persist"
+        "compress=zstd"
+        "noatime"
+      ];
+      neededForBoot = true;
+    };
 
-  fileSystems."/boot" = {
-    device = "/dev/disk/by-uuid/38BE-2BE4";
-    fsType = "vfat";
-    options = [
-      "fmask=0077"
-      "dmask=0077"
-    ];
+    "/boot" = {
+      device = "/dev/disk/by-uuid/38BE-2BE4";
+      fsType = "vfat";
+      options = [
+        "fmask=0077"
+        "dmask=0077"
+      ];
+    };
   };
 
   swapDevices = [
