@@ -198,9 +198,13 @@ in
     sops.secrets = lib.mkIf cifsCfg.enable {
       smb_username = {
         inherit (cifsCfg) sopsFile;
+        mode = "0440";
+        group = "users";
       };
       smb_password = {
         inherit (cifsCfg) sopsFile;
+        mode = "0440";
+        group = "users";
       };
       smb_domain = {
         inherit (cifsCfg) sopsFile;

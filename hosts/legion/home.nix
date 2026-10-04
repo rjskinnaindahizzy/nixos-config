@@ -36,10 +36,21 @@
       sops
       freerdp
       (pkgs.writeShellScriptBin "rdp-poweredge" ''
+        PASS_ARGS=()
+        if [ -r /run/secrets/smb_password ]; then
+          PASS_ARGS+=("/p:$(cat /run/secrets/smb_password)")
+        fi
+        USER_NAME="user"
+        if [ -r /run/secrets/smb_username ]; then
+          USER_NAME="$(cat /run/secrets/smb_username)"
+        fi
+
         exec ${pkgs.freerdp}/bin/xfreerdp \
           /v:192.168.50.59 \
           /d:192.168.50.59 \
-          /u:user \
+          /u:"$USER_NAME" \
+          "''${PASS_ARGS[@]}" \
+          /cert:ignore \
           /network:lan \
           /gfx:avc444 \
           +fonts \
@@ -110,7 +121,7 @@
           "Network"
           "RemoteAccess"
         ];
-        terminal = true;
+        terminal = false;
       };
     };
     mimeApps = {
