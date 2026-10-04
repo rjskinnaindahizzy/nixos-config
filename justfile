@@ -12,9 +12,19 @@ default:
 # System Lifecycle (Powered by nh with visual build trees & diffs)
 #─────────────────────────────────────────────────────────────────────────────
 
+# Show which specialisation is currently active (performance vs standard)
+profile:
+    @bash -c 'if systemctl is-active -q cpu-performance.service; then echo "PERFORMANCE (Zen kernel + tuned CPU/GPU)"; else echo "STANDARD (default LTS kernel)"; fi'
+
 # Apply configuration to the running system
 switch:
     nh os switch {{flake}}
+    @just profile
+
+# Return to standard default profile (LTS kernel, quiet fans, full mitigations)
+normal:
+    nh os switch {{flake}}
+    @just profile
 
 # Test configuration without modifying bootloader
 test:
@@ -31,10 +41,7 @@ rollback:
 # Switch to uncapped performance profile (Zen kernel, 130W GPU, clock offsets)
 perf:
     nh os switch {{flake}} -s performance
-
-# Return to standard default profile (LTS kernel, quiet fans, full mitigations)
-normal:
-    nh os switch {{flake}}
+    @just profile
 
 # Build and run a sandboxed VM with hardware acceleration (isolated in /tmp)
 vm:
@@ -130,6 +137,8 @@ eval attr:
 
 # System health and hardware telemetry overview
 status:
+    @echo "=== ACTIVE PROFILE ==="
+    @bash -c 'if [ -e /run/current-system/specialisation/performance ] && readlink /run/current-system/specialisation/performance >/dev/null && systemctl is-active -q cpu-performance.service; then echo "PERFORMANCE (Zen kernel + tuned CPU/GPU)"; else echo "STANDARD (default LTS kernel)"; fi'
     @echo "=== ACTIVE GENERATION ==="
     @readlink -f /run/current-system
     @echo ""
