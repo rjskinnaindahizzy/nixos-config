@@ -41,7 +41,7 @@ vm:
     @bash -c ' \
       set -euo pipefail; \
       tmpdir=$(mktemp -d /tmp/nixos-vm.XXXXXX); \
-      trap "rm -rf \"$tmpdir\" result" EXIT; \
+      trap "rm -rf \"$tmpdir\" /etc/nixos/result" EXIT; \
       nh os build-vm {{flake}}; \
       cd "$tmpdir"; \
       echo "Launching VM with hardware acceleration..."; \
@@ -52,14 +52,13 @@ vm:
 # Maintenance & Code Quality
 #─────────────────────────────────────────────────────────────────────────────
 
-# Update flake.lock inputs and verify evaluations
+# Update flake.lock inputs and verify; restores the lock if evaluation breaks
 up:
-    nix flake update
-    nix flake check --no-build
+    @bash -c 'set -euo pipefail; tmp=$(mktemp); cp -f flake.lock "$tmp"; trap "rm -f $tmp" EXIT; nix flake update; if ! nix flake check --no-build; then cp -f "$tmp" flake.lock; echo "flake check failed — flake.lock restored to the previous revision"; exit 1; fi'
 
 # Format all Nix files
 fmt:
-    nix fmt
+    nix fmt $(find . -name '*.nix' -not -path './.git/*' | sort)
 
 # Run complete linter and test suite (statix, deadnix, nixfmt, VM test)
 check:
@@ -84,8 +83,7 @@ maintain:
 
 # Trigger immediate Restic backup to PowerEdge server (/mnt/share)
 backup:
-    -sudo systemctl start restic-backups-persist.service
-    @systemctl status restic-backups-persist.service --no-pager
+    @bash -c 'rc=0; sudo systemctl start restic-backups-persist.service || rc=$?; systemctl status restic-backups-persist.service --no-pager || true; if [ "$rc" -ne 0 ]; then echo "restic backup trigger failed (exit $rc)"; exit "$rc"; fi'
 
 # Check backup timer and last run logs
 backup-status:
@@ -104,7 +102,7 @@ scrub:
 
 # Edit encrypted secrets (SOPS)
 secrets:
-    sops hosts/legion/secrets.yaml
+    @bash -c 'sops hosts/legion/secrets.yaml; rc=$?; if [ "$rc" -ne 0 ] && [ "$rc" -ne 200 ]; then exit "$rc"; fi'
 
 # Enter default developer shell
 dev:

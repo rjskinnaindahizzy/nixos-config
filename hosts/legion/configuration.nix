@@ -277,7 +277,13 @@ in
   # mountpoint AND probe TCP/445. An ExecCondition exiting non-zero (but not 255)
   # skips the unit as "condition failed" instead of stalling the backup.
   systemd.services."restic-backups-persist" = {
-    unitConfig.ConditionPathIsMountPoint = "/mnt/share";
+    unitConfig = {
+      # Bring the share up first (bounded by the fstab mount timeouts). If the
+      # server is unreachable the mountpoint stays absent, so the Condition
+      # below skips the unit cleanly rather than failing or silently no-oping.
+      WantsMountsFor = "/mnt/share";
+      ConditionPathIsMountPoint = "/mnt/share";
+    };
     serviceConfig.ExecCondition = pkgs.writeShellScript "restic-smb-reachable" ''
       # The probe's exit status becomes the script's status: 0 means reachable.
       ${pkgs.coreutils}/bin/timeout 3 ${pkgs.bash}/bin/bash -c "exec 3<>/dev/tcp/${config.modules.networking.cifsClient.mounts.share.server}/445" 2>/dev/null
@@ -478,5 +484,9 @@ in
         "-device usb-tablet" # Backup input
       ];
     };
+
+    # The VM has a single virtual disk with no btrfs, so the module cannot derive
+    # a scrub target and its assertion would fail. Scrubbing is meaningless there.
+    services.btrfs.autoScrub.enable = lib.mkForce false;
   };
 }

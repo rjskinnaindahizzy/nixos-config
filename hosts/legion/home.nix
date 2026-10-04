@@ -35,6 +35,7 @@
       kdePackages.spectacle
       mangohud
       just
+      sops
     ];
 
     file."justfile".source = config.lib.file.mkOutOfStoreSymlink "/etc/nixos/justfile";
