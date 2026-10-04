@@ -137,6 +137,11 @@ in
       "lz4_compress"
     ];
 
+    # Stabilize Realtek RTL8852AE Wi-Fi by disabling PCIe ASPM power collapses
+    extraModprobeConfig = ''
+      options rtw89_pci disable_aspm_l1=y disable_aspm_l1ss=y
+    '';
+
     initrd = {
       # Modules required for Zswap/ZRAM early init + keyboard for LUKS prompt
       kernelModules = [
