@@ -82,9 +82,17 @@
         ];
       };
     };
-    # Gaming/Proton memory mapping requirement (mkForce to override hardened profile)
-    boot.kernel.sysctl."vm.max_map_count" = lib.mkForce 2147483642;
-
+    # SteamOS gaming optimizations
+    boot.kernel.sysctl = {
+      # Gaming/Proton memory mapping requirement (mkForce to override hardened profile)
+      "vm.max_map_count" = lib.mkForce 2147483642;
+      # Disable split-lock mitigate penalty that causes micro-stutters in Proton games
+      "kernel.split_lock_mitigate" = lib.mkDefault 0;
+      # Reduce CFS scheduler bandwidth slice for frame pacing smoothness
+      "kernel.sched_cfs_bandwidth_slice_us" = lib.mkDefault 3000;
+      # Fast TCP socket recycling for killed/restarted game processes
+      "net.ipv4.tcp_fin_timeout" = lib.mkDefault 5;
+    };
     # MangoHud for FPS monitoring
     environment.systemPackages = with pkgs; [
       mangohud

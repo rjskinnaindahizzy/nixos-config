@@ -26,7 +26,7 @@ in
     nix-settings = {
       enable = true;
       cachix = cachixConfig; # Passed from flake.nix
-      gc.days = 7;
+      gc.automatic = false; # Automatic cleanup handled by programs.nh.clean
     };
 
     # Security (hardened profile + overrides)
@@ -236,6 +236,20 @@ in
     '';
   };
 
+  # Programs
+  programs = {
+    nh = {
+      enable = true;
+      clean = {
+        enable = true;
+        extraArgs = "--keep-since 7d --keep 5";
+      };
+      flake = "/persist/home/user/nixos-config";
+    };
+    nix-index.enable = true;
+    nix-index-database.comma.enable = true;
+  };
+
   system.activationScripts.diff = ''
     export PATH="$PATH:${pkgs.nix}/bin"
     if [[ -e /run/current-system ]]; then
@@ -385,10 +399,6 @@ in
     lm_sensors
     i2c-tools
   ];
-
-  # nix-index + comma
-  programs.nix-index.enable = true;
-  programs.nix-index-database.comma.enable = true;
 
   #─────────────────────────────────────────────────────────────────────────────
   # VM-specific optimizations for 'just vm'

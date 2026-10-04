@@ -94,6 +94,7 @@
       ++ [
         uv
         bun
+        nix-alien
       ];
   };
 }

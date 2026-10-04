@@ -35,6 +35,11 @@
       url = "github:nix-community/nix-index-database";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    nix-alien = {
+      url = "github:thiagokokada/nix-alien";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -53,6 +58,9 @@
       pkgs = import nixpkgs {
         inherit system;
         config.allowUnfree = true;
+        overlays = [
+          inputs.nix-alien.overlays.default
+        ];
       };
 
       baseModules = [
@@ -135,6 +143,7 @@
             just
             direnv
             nix-direnv
+            nix-alien
 
             # Languages
             nodejs_22
