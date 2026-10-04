@@ -14,7 +14,7 @@ in
       systemd.services = {
         cpu-performance = {
           description = "AMD Ryzen 7 5800H Performance Optimization";
-          wantedBy = [ "multi-user.target" ];
+          wantedBy = [ "graphical.target" ];
           after = [
             "systemd-modules-load.service"
             "power-profiles-daemon.service"
@@ -66,18 +66,22 @@ in
               [ -w /sys/firmware/acpi/platform_profile ] && \
                 echo performance > /sys/firmware/acpi/platform_profile 2>/dev/null || true
 
+            # Update state.ini directly so daemon loads performance profile on startup
+            if [ -d /var/lib/power-profiles-daemon ]; then
+              sed -i 's/^Profile=.*/Profile=performance/' /var/lib/power-profiles-daemon/state.ini 2>/dev/null || true
+            fi
+
             # Sync with power-profiles-daemon so KDE PowerDevil inherits performance
             if command -v powerprofilesctl >/dev/null 2>&1; then
               powerprofilesctl set performance 2>/dev/null || true
             fi
-
               echo "CPU performance optimization applied"
           '';
         };
 
         irq-performance = lib.mkIf cfg.irq.affinity {
           description = "IRQ Performance Tuning for AMD Ryzen 7 5800H";
-          wantedBy = [ "multi-user.target" ];
+          wantedBy = [ "graphical.target" ];
           after = [ "cpu-performance.service" ];
           requires = [ "cpu-performance.service" ];
           serviceConfig = {
@@ -187,7 +191,7 @@ in
     (lib.mkIf (!cfg.enable) {
       systemd.services.platform-profile-balanced = {
         description = "Lenovo Legion Balanced ACPI Profile (White LED)";
-        wantedBy = [ "multi-user.target" ];
+        wantedBy = [ "graphical.target" ];
         after = [
           "systemd-modules-load.service"
           "power-profiles-daemon.service"
@@ -202,19 +206,18 @@ in
           [ -w /sys/firmware/acpi/platform_profile ] && \
             echo balanced > /sys/firmware/acpi/platform_profile 2>/dev/null || true
 
+          # Update state.ini directly so daemon loads balanced profile on startup
+          if [ -d /var/lib/power-profiles-daemon ]; then
+            sed -i 's/^Profile=.*/Profile=balanced/' /var/lib/power-profiles-daemon/state.ini 2>/dev/null || true
+          fi
+
           # Sync with power-profiles-daemon so KDE PowerDevil inherits balanced
           if command -v powerprofilesctl >/dev/null 2>&1; then
             powerprofilesctl set balanced 2>/dev/null || true
           fi
-
           echo "ACPI platform profile set to balanced (White LED)"
         '';
       };
     })
-
-    {
-      # Ensure power-profiles-daemon starts at boot rather than on-demand desktop D-Bus activation
-      systemd.services.power-profiles-daemon.wantedBy = [ "multi-user.target" ];
-    }
   ];
 }
