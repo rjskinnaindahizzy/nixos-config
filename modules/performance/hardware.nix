@@ -44,46 +44,12 @@ in
     ];
 
     # LLM/AI Workload Optimizations - Resource limits
+    # NOTE: memlock and nofile are already set globally in modules/security.nix;
+    # defining them again here produced duplicate pam_limits entries. Only the
+    # entries unique to the performance profile remain. `nproc = unlimited` was
+    # deliberately removed from security.nix (fork-bomb protection) and is not
+    # reintroduced here.
     security.pam.loginLimits = [
-      # Memory locking (required for CUDA pinned memory)
-      {
-        domain = "*";
-        type = "hard";
-        item = "memlock";
-        value = "unlimited";
-      }
-      {
-        domain = "*";
-        type = "soft";
-        item = "memlock";
-        value = "unlimited";
-      }
-      # File descriptors (LLM model loading)
-      {
-        domain = "*";
-        type = "hard";
-        item = "nofile";
-        value = "1048576";
-      }
-      {
-        domain = "*";
-        type = "soft";
-        item = "nofile";
-        value = "1048576";
-      }
-      # Process limits
-      {
-        domain = "*";
-        type = "hard";
-        item = "nproc";
-        value = "unlimited";
-      }
-      {
-        domain = "*";
-        type = "soft";
-        item = "nproc";
-        value = "unlimited";
-      }
       # Realtime priority (gaming/audio)
       {
         domain = "@users";

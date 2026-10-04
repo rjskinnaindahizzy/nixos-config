@@ -48,8 +48,12 @@
       ++ lib.optionals config.services.flatpak.enable [
         "/var/lib/flatpak"
       ];
+      # Only persist ssh host keys when sshd will actually generate them;
+      # otherwise impermanence creates dangling symlinks in /etc/ssh.
       files = [
         "/etc/machine-id"
+      ]
+      ++ lib.optionals config.services.openssh.enable [
         "/etc/ssh/ssh_host_ed25519_key"
         "/etc/ssh/ssh_host_ed25519_key.pub"
         "/etc/ssh/ssh_host_rsa_key"

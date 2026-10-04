@@ -30,7 +30,6 @@
       performance = true;
       persistenceMode = true;
       powerLimit = 130;
-      clockOffsets = true;
     };
     kernel.zen = true;
     mitigations.disable = true;

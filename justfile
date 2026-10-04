@@ -64,6 +64,7 @@ fmt:
 check:
     nix flake check --no-build
     nix build .#checks.x86_64-linux.lint-nix
+    nix build .#checks.x86_64-linux.development-test
     @rm -f result
 
 # Garbage collect old generations (keeps last 5 generations)

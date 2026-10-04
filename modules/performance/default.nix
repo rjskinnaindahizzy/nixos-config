@@ -182,11 +182,8 @@ in
         description = "GPU power limit in watts (RTX 3060 Mobile max: 130W)";
       };
 
-      clockOffsets = lib.mkOption {
-        type = lib.types.bool;
-        default = false;
-        description = "Apply GPU/memory clock offsets for overclocking";
-      };
+      # NOTE: the `clockOffsets` option was removed along with the dead
+      # `nvidia-smi -ac` call it gated (unsupported on consumer GeForce Mobile).
     };
   };
 

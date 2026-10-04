@@ -15,7 +15,12 @@
       enable = true;
       qemu = {
         package = pkgs.qemu_kvm;
-        runAsRoot = true;
+        # NOTE: explicit `runAsRoot = false` (nixpkgs' default is TRUE, so leaving
+        # it unset keeps QEMU guests running as root). With false, guests run as
+        # the unprivileged qemu-libvirtd user - needed for real hardening, since
+        # any member of the `libvirtd` group could otherwise reach host root.
+        # Caveat from upstream: may need permission fixes for some guest images.
+        runAsRoot = false;
         swtpm.enable = true;
       };
     };

@@ -147,6 +147,18 @@ in
     # Required kernel module for Tailscale (not needed in initrd)
     boot.kernelModules = lib.mkIf config.modules.networking.tailscale.enable [ "tun" ];
 
+    # The option tree above described intent, but nothing ever enabled the daemon:
+    # services.tailscale.enable stayed false while firewall/tun/serviceConfig all
+    # referenced tailscale0. That also produced a tailscaled.service with no
+    # ExecStart. Wire it up, and consume the ssh/exitNode options (previously dead).
+    services.tailscale = lib.mkIf config.modules.networking.tailscale.enable {
+      enable = true;
+      extraUpFlags =
+        lib.optional config.modules.networking.tailscale.ssh "--ssh"
+        ++ lib.optional config.modules.networking.tailscale.exitNode "--advertise-exit-node";
+      useRoutingFeatures = lib.mkIf config.modules.networking.tailscale.exitNode "both";
+    };
+
     systemd = {
       services = {
         NetworkManager-wait-online.enable = false;

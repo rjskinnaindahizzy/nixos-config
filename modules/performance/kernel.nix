@@ -47,7 +47,8 @@ in
         # CPU idle/power management
         ++ lib.optionals cfg.cpu.disableIdleStates [
           "processor.max_cstate=1"
-          "intel_idle.max_cstate=0"
+          # NOTE: intel_idle.max_cstate was removed - this is an AMD Ryzen CPU
+          # and has no intel_idle driver, so the parameter was inert.
           "idle=nomwait"
         ]
         # Threading and preemption
@@ -58,12 +59,16 @@ in
           "tsc=noirqtime"
         ]
         # RCU optimizations
+        # NOTE: rcu_nocbs is already emitted by the isolation block above when
+        # isolation is enabled. Passing a second rcu_nocbs= here would silently
+        # override it (the kernel honours the last occurrence), so only set it
+        # when isolation is off.
         ++ [
           "skew_tick=1"
-          "rcu_nocbs=all"
           "rcutree.rcu_idle_gp_delay=0"
           "rcupdate.rcu_expedited=1"
         ]
+        ++ lib.optionals (!cfg.cpu.isolation.enable) [ "rcu_nocbs=all" ]
         # NVMe optimization
         ++ lib.optionals cfg.storage.nvmeOptimization [
           "nvme_core.default_ps_max_latency_us=0"
@@ -167,9 +172,10 @@ in
         # Network Performance Tuning
         "net.core.netdev_max_backlog" = 16384;
         "net.core.somaxconn" = 8192;
-        "net.core.rmem_default" = 31457280;
+        # NOTE: rmem_default/wmem_default were removed. They set the *default*
+        # buffer for every new socket to 30MB; the *_max values below are the
+        # correct lever (auto-tuning grows sockets toward the max as needed).
         "net.core.rmem_max" = 268435456;
-        "net.core.wmem_default" = 31457280;
         "net.core.wmem_max" = 268435456;
         "net.core.optmem_max" = 25165824;
         "net.ipv4.tcp_rmem" = "8192 262144 536870912";
@@ -181,14 +187,19 @@ in
         "net.ipv4.tcp_max_syn_backlog" = 8192;
         "net.ipv4.tcp_max_tw_buckets" = 2000000;
         "net.ipv4.tcp_tw_reuse" = 1;
-        "net.ipv4.tcp_fin_timeout" = 10;
+        # NOTE: tcp_fin_timeout is set by modules/gaming.nix (5s, fast socket
+        # recycling for killed/restarted game processes). A plain value here
+        # would override it in the performance profile, which is exactly when
+        # gaming runs, so it is intentionally not set in this module.
         "net.ipv4.tcp_slow_start_after_idle" = 0;
         "net.ipv4.tcp_keepalive_time" = 60;
         "net.ipv4.tcp_keepalive_intvl" = 10;
         "net.ipv4.tcp_keepalive_probes" = 6;
         "net.ipv4.tcp_syncookies" = 1;
         "net.ipv4.tcp_rfc1337" = 1;
-        "net.ipv4.tcp_timestamps" = 0;
+        # TCP timestamps ON: disabling them (as older gaming guides suggest)
+        # breaks RFC7323 window scaling and degrades BBR pacing.
+        "net.ipv4.tcp_timestamps" = 1;
         "net.ipv4.tcp_sack" = 1;
         "net.ipv4.tcp_fack" = 1;
         "net.ipv4.tcp_window_scaling" = 1;

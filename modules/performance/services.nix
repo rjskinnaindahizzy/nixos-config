@@ -156,14 +156,13 @@ in
             nvidia-smi -pm 1 2>/dev/null || true
           ''}
 
-          # Set power limit
+          # Set power limit (supported on RTX 3060 Mobile)
           nvidia-smi -pl ${toString cfg.nvidia.powerLimit} 2>/dev/null || true
 
-          ${lib.optionalString cfg.nvidia.clockOffsets ''
-
-            # Set performance clocks (Memory: 6001MHz, GPU: 1750MHz)
-            nvidia-smi -ac 6001,1750 2>/dev/null || true
-          ''}
+          # NOTE: `nvidia-smi -ac` (application clocks) was removed. It is an
+          # enterprise-only feature and silently fails on consumer GeForce Mobile
+          # parts. Clock offsets are applied per-game by GameMode instead
+          # (nv_core_clock_mhz_offset/nv_mem_clock_mhz_offset in modules/gaming.nix).
 
           echo "NVIDIA performance optimization applied"
         '';
