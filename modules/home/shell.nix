@@ -84,6 +84,8 @@
           mitm = "mitmproxy";
           mitmweb = "mitmweb";
           ts = "date +%Y%m%d-%H%M%S";
+          chrome = "google-chrome-stable";
+          google-chrome = "google-chrome-stable";
 
           # Git ergonomics (lovesegfault-style shortcuts)
           g = "git";
