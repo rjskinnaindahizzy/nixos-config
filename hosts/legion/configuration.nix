@@ -10,8 +10,8 @@
 }:
 let
   userHome = "/home/${userName}";
-  secretsFile = ./secrets.yaml;
-  hasSecrets = builtins.pathExists secretsFile;
+  secretsFile = "/persist/home/user/nixos-config/hosts/legion/secrets.yaml";
+  hasSecrets = true;
 in
 {
   imports = [
@@ -170,8 +170,8 @@ in
         mkdir -p /btrfs_tmp
         mount -t btrfs /dev/mapper/luks-f7c806f1-c985-45c3-b584-7f8411ae04fb /btrfs_tmp
 
+        mkdir -p /btrfs_tmp/old_roots
         if [[ -e /btrfs_tmp/root ]]; then
-            mkdir -p /btrfs_tmp/old_roots
             timestamp=$(date --date="@$(stat -c %Y /btrfs_tmp/root)" "+%Y-%m-%d_%H:%M:%S")
             mv /btrfs_tmp/root "/btrfs_tmp/old_roots/$timestamp"
         fi
@@ -314,6 +314,8 @@ in
   # SOPS Secrets
   #─────────────────────────────────────────────────────────────────────────────
   sops = {
+    defaultSopsFile = secretsFile;
+    validateSopsFiles = false;
     age = {
       keyFile = "/persist${userHome}/.config/sops/age/keys.txt";
       sshKeyPaths = lib.optional (builtins.pathExists "/persist${userHome}/.ssh/id_ed25519") "/persist${userHome}/.ssh/id_ed25519";
@@ -346,7 +348,7 @@ in
   users = {
     mutableUsers = false;
     users = {
-      root.hashedPasswordFile = "/persist/secrets/user-password";
+      root.hashedPasswordFile = "/persist/secrets/root-password";
       ${userName} = {
         isNormalUser = true;
         description = userName;

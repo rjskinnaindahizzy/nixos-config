@@ -33,13 +33,6 @@
       };
     };
 
-    # Common caches
-    cuda = lib.mkOption {
-      type = lib.types.bool;
-      default = false;
-      description = "Deprecated: cuda-maintainers cache is defunct (uses nix-community instead)";
-    };
-
     # GC settings
     gc = {
       automatic = lib.mkOption {

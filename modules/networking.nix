@@ -43,7 +43,7 @@ in
       enable = lib.mkEnableOption "CIFS client for mounting Windows network shares";
 
       sopsFile = lib.mkOption {
-        type = lib.types.path;
+        type = lib.types.either lib.types.path lib.types.str;
         description = "Path to SOPS secrets file containing smb_username, smb_password, smb_domain";
         example = "./secrets.yaml";
       };

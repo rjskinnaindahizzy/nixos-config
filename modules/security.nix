@@ -55,12 +55,6 @@
             item = "nofile";
             value = "1048576";
           }
-          {
-            domain = "*";
-            type = "-";
-            item = "nproc";
-            value = "unlimited";
-          }
         ];
       };
 
