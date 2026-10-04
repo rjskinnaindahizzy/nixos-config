@@ -60,8 +60,8 @@
         icon = "firefox";
         terminal = false;
         categories = [
-          "Network"
-          "WebBrowser"
+          "Development"
+          "Security"
         ];
       };
       firefox-user-a = {
@@ -71,8 +71,8 @@
         icon = "firefox";
         terminal = false;
         categories = [
-          "Network"
-          "WebBrowser"
+          "Development"
+          "Security"
         ];
       };
       firefox-user-b = {
@@ -82,8 +82,8 @@
         icon = "firefox";
         terminal = false;
         categories = [
-          "Network"
-          "WebBrowser"
+          "Development"
+          "Security"
         ];
       };
       firefox-admin = {
@@ -93,8 +93,8 @@
         icon = "firefox";
         terminal = false;
         categories = [
-          "Network"
-          "WebBrowser"
+          "Development"
+          "Security"
         ];
       };
     };
