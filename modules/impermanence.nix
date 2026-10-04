@@ -20,6 +20,7 @@
     # System-level persistence
     environment.persistence."/persist" = {
       hideMounts = true;
+      allowTrash = true;
       directories = [
         "/var/log"
         "/var/lib/nixos"
@@ -57,7 +58,6 @@
     };
 
     # Home-manager level persistence via NixOS module (avoids duplicate module imports)
-    programs.fuse.userAllowOther = true;
     environment.persistence."/persist".users.${userName} = {
       directories = [
         "Desktop"
@@ -67,10 +67,15 @@
         "Documents"
         "Videos"
         "Projects"
-        ".ssh"
-        ".gnupg"
+        {
+          directory = ".ssh";
+          mode = "0700";
+        }
+        {
+          directory = ".gnupg";
+          mode = "0700";
+        }
         ".mozilla"
-        # Persist all app configs and local data to prevent KDE and app resets.
         # Cruft like ~/.cache, ~/.npm, and scattered ~ files will still be wiped.
         ".config"
         ".local/share"
