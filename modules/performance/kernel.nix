@@ -158,9 +158,10 @@ in
         "kernel.perf_event_paranoid" = -1;
       }
       // lib.optionalAttrs cfg.network.bbr {
-        # BBR TCP Congestion Control
-        "net.core.default_qdisc" = "fq";
+        # BBR TCP Congestion Control + CAKE queue discipline
+        "net.core.default_qdisc" = "cake";
         "net.ipv4.tcp_congestion_control" = "bbr";
+        "net.ipv4.tcp_rfc1337" = 1;
       }
       // lib.optionalAttrs cfg.network.tuning {
         # Network Performance Tuning

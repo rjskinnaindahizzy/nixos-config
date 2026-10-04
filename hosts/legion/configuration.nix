@@ -212,6 +212,18 @@ in
     fwupd.enable = true;
     resolved.enable = true;
     flatpak.enable = true;
+
+    btrfs.autoScrub = {
+      enable = true;
+      interval = "monthly";
+      fileSystems = [ "/persist" ];
+    };
+
+    earlyoom = {
+      enable = true;
+      enableNotifications = true;
+      freeMemThreshold = 5;
+    };
   };
 
   # Compressed RAM swap (lz4 for lowest latency gaming/LLM)

@@ -73,9 +73,15 @@
       };
 
       # Force override Steam module's default (which sets it to false)
-      gamescope.enable = lib.mkForce config.modules.gaming.gamescope;
+      gamescope = {
+        enable = lib.mkForce config.modules.gaming.gamescope;
+        capSysNice = true;
+        args = [
+          "--rt"
+          "--expose-wayland"
+        ];
+      };
     };
-
     # Gaming/Proton memory mapping requirement (mkForce to override hardened profile)
     boot.kernel.sysctl."vm.max_map_count" = lib.mkForce 2147483642;
 
