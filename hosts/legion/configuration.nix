@@ -102,11 +102,8 @@ in
     performance.enable = false;
   };
 
-  # Performance specialisations (extracted to specialisations/)
-  specialisation = {
-    performance.configuration.imports = [ ../../specialisations/performance.nix ];
-    llm.configuration.imports = [ ../../specialisations/llm.nix ];
-  };
+  # Performance specialisation (extracted to specialisations/)
+  specialisation.performance.configuration.imports = [ ../../specialisations/performance.nix ];
 
   #─────────────────────────────────────────────────────────────────────────────
   # Boot (Host-specific)
@@ -234,6 +231,36 @@ in
       SystemMaxUse=10G
       RuntimeMaxUse=256M
     '';
+
+    restic.backups."persist" = {
+      repository = "/mnt/share/Backups/legion-restic";
+      passwordFile = "/persist/secrets/restic-password";
+      paths = [ "/persist" ];
+      exclude = [
+        "/persist/home/*/.cache"
+        "/persist/home/*/.local/share/Steam"
+        "/persist/home/*/.local/share/Trash"
+        "/persist/home/*/Downloads"
+        "/persist/tmp"
+        "/persist/btrfs_tmp"
+      ];
+      timerConfig = {
+        OnCalendar = "daily";
+        Persistent = true;
+      };
+      pruneOpts = [
+        "--keep-daily 7"
+        "--keep-weekly 4"
+        "--keep-monthly 6"
+      ];
+      initialize = true;
+      inhibitsSleep = true;
+    };
+  };
+
+  # Only execute restic backup if the PowerEdge CIFS share is actually mounted
+  systemd.services."restic-backups-persist".unitConfig = {
+    ConditionPathIsMountPoint = "/mnt/share";
   };
 
   # Programs
