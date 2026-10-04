@@ -38,6 +38,7 @@
       (pkgs.writeShellScriptBin "rdp-poweredge" ''
         exec ${pkgs.freerdp}/bin/xfreerdp \
           /v:192.168.50.59 \
+          /d:192.168.50.59 \
           /u:user \
           /network:lan \
           /gfx:avc444 \
