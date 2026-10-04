@@ -444,9 +444,13 @@ in
     jq
     ripgrep
 
+    # Web Browsers
+    (google-chrome.override {
+      commandLineArgs = "--password-store=basic";
+    })
+
     # GUI security tools (CLI tools in devShell)
     burpsuite
-
     # System monitoring tools
     lm_sensors
     i2c-tools
