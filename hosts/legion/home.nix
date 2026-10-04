@@ -78,6 +78,16 @@
         name = "Remote Viewer";
         noDisplay = true;
       };
+      "org.kde.kate" = {
+        name = "Kate";
+        noDisplay = true;
+      };
+    };
+    mimeApps = {
+      enable = true;
+      defaultApplications = {
+        "text/plain" = [ "org.kde.kwrite.desktop" ];
+      };
     };
   };
 }

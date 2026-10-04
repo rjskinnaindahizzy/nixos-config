@@ -85,8 +85,27 @@
     # Exclude default KDE applications
     environment.plasma6.excludePackages = with pkgs.kdePackages; [
       kate
-      ktexteditor
       khelpcenter
+    ];
+
+    # Standalone KWrite text editor (excludes Kate IDE completely)
+    environment.systemPackages = [
+      (pkgs.runCommand "kwrite"
+        {
+          meta.mainProgram = "kwrite";
+        }
+        ''
+          mkdir -p $out/bin $out/share/applications
+          ln -s ${pkgs.kdePackages.kate}/bin/kwrite $out/bin/kwrite
+          ln -s ${pkgs.kdePackages.kate}/share/applications/org.kde.kwrite.desktop $out/share/applications/org.kde.kwrite.desktop
+          for d in ${pkgs.kdePackages.kate}/share/*; do
+            base=$(basename "$d")
+            if [ "$base" != "applications" ]; then
+              ln -s "$d" "$out/share/$base"
+            fi
+          done
+        ''
+      )
     ];
 
     # Bluetooth
