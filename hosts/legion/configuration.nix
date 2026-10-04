@@ -131,6 +131,8 @@ in
       # Fix LUKS passphrase keyboard input issues on Lenovo Legion
       "i8042.nopnp" # Don't rely on PNP detection (fixes timing issues)
       "i8042.dumbkbd" # Treat keyboard as dumb device (no timing assumptions)
+      # Nvidia Wayland DRM framebuffer device backend
+      "nvidia-drm.fbdev=1"
     ];
 
     kernelModules = [
@@ -205,7 +207,10 @@ in
   # Hardware (Host-specific)
   #─────────────────────────────────────────────────────────────────────────────
   powerManagement.enable = true;
-  hardware.enableRedistributableFirmware = true;
+  hardware = {
+    enableRedistributableFirmware = true;
+    steam-hardware.enable = true;
+  };
 
   services = {
     fstrim.enable = true;
@@ -224,7 +229,19 @@ in
       enableNotifications = true;
       freeMemThreshold = 5;
     };
+
+    journald.extraConfig = ''
+      SystemMaxUse=10G
+      RuntimeMaxUse=256M
+    '';
   };
+
+  system.activationScripts.diff = ''
+    export PATH="$PATH:${pkgs.nix}/bin"
+    if [[ -e /run/current-system ]]; then
+      ${pkgs.nvd}/bin/nvd diff /run/current-system "$systemConfig" || true
+    fi
+  '';
 
   # Compressed RAM swap (lz4 for lowest latency gaming/LLM)
   zramSwap = {

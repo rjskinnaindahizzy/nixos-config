@@ -63,6 +63,15 @@
           }
         ];
       };
+
+      boot.kernel.sysctl = {
+        "kernel.kptr_restrict" = lib.mkOverride 900 2;
+        "kernel.yama.ptrace_scope" = lib.mkDefault 1;
+        "kernel.perf_event_paranoid" = lib.mkDefault 2;
+        "kernel.unprivileged_bpf_disabled" = lib.mkDefault 2;
+        "fs.protected_fifos" = lib.mkDefault 2;
+        "fs.protected_regular" = lib.mkDefault 2;
+      };
     }
   ];
 }

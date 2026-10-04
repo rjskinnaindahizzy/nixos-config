@@ -32,6 +32,10 @@
     virtualisation.docker = {
       enable = true;
       enableOnBoot = lib.mkDefault config.modules.docker.enableOnBoot;
+      autoPrune = {
+        enable = true;
+        dates = "weekly";
+      };
     };
 
     hardware.nvidia-container-toolkit.enable = lib.mkDefault config.modules.docker.nvidia;
