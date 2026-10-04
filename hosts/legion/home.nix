@@ -49,4 +49,14 @@
 
   # Enable XDG standards
   xdg.enable = true;
+
+  # Disable KWallet entirely. With auto-login there is no PAM password to unlock
+  # a wallet, so kwalletd6 blocks on org.kde.KWallet.isEnabled/open and callers
+  # (Chromium) stall ~25s per call. "Enabled=false" makes kwalletd6 exit
+  # immediately, so callers fail fast. Secrets are covered by LUKS FDE + sops-nix.
+  xdg.configFile."kwalletrc".text = ''
+    [Wallet]
+    Enabled=false
+    First Use=false
+  '';
 }
