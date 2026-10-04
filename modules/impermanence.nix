@@ -26,6 +26,7 @@
         "/var/lib/nixos"
         "/var/lib/systemd/coredump"
         "/etc/NetworkManager/system-connections"
+        "/var/lib/power-profiles-daemon"
         {
           directory = "/var/lib/colord";
           user = "colord";

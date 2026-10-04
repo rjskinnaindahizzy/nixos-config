@@ -15,54 +15,63 @@ in
         cpu-performance = {
           description = "AMD Ryzen 7 5800H Performance Optimization";
           wantedBy = [ "multi-user.target" ];
-          after = [ "systemd-modules-load.service" ];
+          after = [
+            "systemd-modules-load.service"
+            "power-profiles-daemon.service"
+          ];
+          wants = [ "power-profiles-daemon.service" ];
           serviceConfig = {
             Type = "oneshot";
             RemainAfterExit = true;
           };
           script = ''
 
-            # Apply per-CPU performance settings
-            for cpu_dir in /sys/devices/system/cpu/cpu[0-9]*; do
-              # Set CPU governor
-              [ -w "$cpu_dir/cpufreq/scaling_governor" ] && \
-                echo ${cfg.cpu.governor} > "$cpu_dir/cpufreq/scaling_governor" 2>/dev/null || true
+              # Apply per-CPU performance settings
+              for cpu_dir in /sys/devices/system/cpu/cpu[0-9]*; do
+                # Set CPU governor
+                [ -w "$cpu_dir/cpufreq/scaling_governor" ] && \
+                  echo ${cfg.cpu.governor} > "$cpu_dir/cpufreq/scaling_governor" 2>/dev/null || true
 
-              # Set energy performance preference (AMD P-State)
-              [ -w "$cpu_dir/cpufreq/energy_performance_preference" ] && \
-                echo performance > "$cpu_dir/cpufreq/energy_performance_preference" 2>/dev/null || true
+                # Set energy performance preference (AMD P-State)
+                [ -w "$cpu_dir/cpufreq/energy_performance_preference" ] && \
+                  echo performance > "$cpu_dir/cpufreq/energy_performance_preference" 2>/dev/null || true
 
-              # Disable energy bias for maximum performance
-              [ -w "$cpu_dir/power/energy_perf_bias" ] && \
-                echo 0 > "$cpu_dir/power/energy_perf_bias" 2>/dev/null || true
+                # Disable energy bias for maximum performance
+                [ -w "$cpu_dir/power/energy_perf_bias" ] && \
+                  echo 0 > "$cpu_dir/power/energy_perf_bias" 2>/dev/null || true
 
-              # Set minimum frequency to maximum (force high clocks)
-              if [ -w "$cpu_dir/cpufreq/scaling_min_freq" ]; then
-                max_freq=$(cat "$cpu_dir/cpufreq/cpuinfo_max_freq" 2>/dev/null)
-                [ -n "$max_freq" ] && echo "$max_freq" > "$cpu_dir/cpufreq/scaling_min_freq" 2>/dev/null || true
-              fi
+                # Set minimum frequency to maximum (force high clocks)
+                if [ -w "$cpu_dir/cpufreq/scaling_min_freq" ]; then
+                  max_freq=$(cat "$cpu_dir/cpufreq/cpuinfo_max_freq" 2>/dev/null)
+                  [ -n "$max_freq" ] && echo "$max_freq" > "$cpu_dir/cpufreq/scaling_min_freq" 2>/dev/null || true
+                fi
 
-              ${lib.optionalString cfg.cpu.disableIdleStates ''
-                # Disable CPU idle states for lowest latency
-                for state in "$cpu_dir"/cpuidle/state*/disable; do
-                  [ -w "$state" ] && echo 1 > "$state" 2>/dev/null || true
-                done
-              ''}
-            done
+                ${lib.optionalString cfg.cpu.disableIdleStates ''
+                  # Disable CPU idle states for lowest latency
+                  for state in "$cpu_dir"/cpuidle/state*/disable; do
+                    [ -w "$state" ] && echo 1 > "$state" 2>/dev/null || true
+                  done
+                ''}
+              done
 
-            # Enable CPU boost
-            [ -w /sys/devices/system/cpu/cpufreq/boost ] && \
-              echo 1 > /sys/devices/system/cpu/cpufreq/boost 2>/dev/null || true
+              # Enable CPU boost
+              [ -w /sys/devices/system/cpu/cpufreq/boost ] && \
+                echo 1 > /sys/devices/system/cpu/cpufreq/boost 2>/dev/null || true
 
-            # AMD P-State status
-            [ -w /sys/devices/system/cpu/amd_pstate/status ] && \
-              echo active > /sys/devices/system/cpu/amd_pstate/status 2>/dev/null || true
+              # AMD P-State status
+              [ -w /sys/devices/system/cpu/amd_pstate/status ] && \
+                echo active > /sys/devices/system/cpu/amd_pstate/status 2>/dev/null || true
 
-            # Set ACPI Platform Profile to performance (Red LED, unlocks 130W GPU & full fan tables)
-            [ -w /sys/firmware/acpi/platform_profile ] && \
-              echo performance > /sys/firmware/acpi/platform_profile 2>/dev/null || true
+              # Set ACPI Platform Profile to performance (Red LED, unlocks 130W GPU & full fan tables)
+              [ -w /sys/firmware/acpi/platform_profile ] && \
+                echo performance > /sys/firmware/acpi/platform_profile 2>/dev/null || true
 
-            echo "CPU performance optimization applied"
+            # Sync with power-profiles-daemon so KDE PowerDevil inherits performance
+            if command -v powerprofilesctl >/dev/null 2>&1; then
+              powerprofilesctl set performance 2>/dev/null || true
+            fi
+
+              echo "CPU performance optimization applied"
           '';
         };
 
@@ -179,7 +188,11 @@ in
       systemd.services.platform-profile-balanced = {
         description = "Lenovo Legion Balanced ACPI Profile (White LED)";
         wantedBy = [ "multi-user.target" ];
-        after = [ "systemd-modules-load.service" ];
+        after = [
+          "systemd-modules-load.service"
+          "power-profiles-daemon.service"
+        ];
+        wants = [ "power-profiles-daemon.service" ];
         serviceConfig = {
           Type = "oneshot";
           RemainAfterExit = true;
@@ -188,9 +201,20 @@ in
           # Set ACPI Platform Profile to balanced (White LED, standard fan tables)
           [ -w /sys/firmware/acpi/platform_profile ] && \
             echo balanced > /sys/firmware/acpi/platform_profile 2>/dev/null || true
+
+          # Sync with power-profiles-daemon so KDE PowerDevil inherits balanced
+          if command -v powerprofilesctl >/dev/null 2>&1; then
+            powerprofilesctl set balanced 2>/dev/null || true
+          fi
+
           echo "ACPI platform profile set to balanced (White LED)"
         '';
       };
     })
+
+    {
+      # Ensure power-profiles-daemon starts at boot rather than on-demand desktop D-Bus activation
+      systemd.services.power-profiles-daemon.wantedBy = [ "multi-user.target" ];
+    }
   ];
 }
