@@ -95,7 +95,7 @@ in
     # Development
     development = {
       enable = true;
-      cuda = true;
+      cuda = false; # Decoupled from base system; use 'just dev-cuda' for CUDA dev
       nix-ld = true;
     };
 

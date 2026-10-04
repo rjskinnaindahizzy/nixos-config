@@ -50,5 +50,53 @@
       "ff-user-b" = "firefox -P user-b &";
       "ff-admin" = "firefox -P admin &";
     };
+
+    # Desktop launcher entries for GUI / KRunner discovery
+    xdg.desktopEntries = {
+      firefox-unauth = {
+        name = "Firefox (Unauth Profile)";
+        genericName = "Web Browser";
+        exec = "firefox -P unauth %U";
+        icon = "firefox";
+        terminal = false;
+        categories = [
+          "Network"
+          "WebBrowser"
+        ];
+      };
+      firefox-user-a = {
+        name = "Firefox (User A Profile)";
+        genericName = "Web Browser";
+        exec = "firefox -P user-a %U";
+        icon = "firefox";
+        terminal = false;
+        categories = [
+          "Network"
+          "WebBrowser"
+        ];
+      };
+      firefox-user-b = {
+        name = "Firefox (User B Profile)";
+        genericName = "Web Browser";
+        exec = "firefox -P user-b %U";
+        icon = "firefox";
+        terminal = false;
+        categories = [
+          "Network"
+          "WebBrowser"
+        ];
+      };
+      firefox-admin = {
+        name = "Firefox (Admin Profile)";
+        genericName = "Web Browser";
+        exec = "firefox -P admin %U";
+        icon = "firefox";
+        terminal = false;
+        categories = [
+          "Network"
+          "WebBrowser"
+        ];
+      };
+    };
   };
 }
