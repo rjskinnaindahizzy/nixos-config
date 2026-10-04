@@ -38,7 +38,11 @@
       sops
     ];
 
-    file."justfile".source = config.lib.file.mkOutOfStoreSymlink "/etc/nixos/justfile";
+    # NOTE: /etc/nixos is a SYMLINK to /persist/system/nixos-config, and
+    # just/nix refuse to follow symlinks when resolving files, so the link
+    # must target the real path.
+    file."justfile".source =
+      config.lib.file.mkOutOfStoreSymlink "/persist/system/nixos-config/justfile";
   };
 
   home.sessionPath = [
