@@ -40,6 +40,7 @@
     programs.fuse.userAllowOther = true;
     environment.persistence."/persist".users.${userName} = {
       directories = [
+        "Desktop"
         "Downloads"
         "Music"
         "Pictures"
