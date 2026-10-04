@@ -273,7 +273,7 @@ in
   sops = {
     age = {
       keyFile = "/persist${userHome}/.config/sops/age/keys.txt";
-      sshKeyPaths = [ "/persist${userHome}/.ssh/id_ed25519" ];
+      sshKeyPaths = lib.optional (builtins.pathExists "/persist${userHome}/.ssh/id_ed25519") "/persist${userHome}/.ssh/id_ed25519";
     };
 
     secrets = {

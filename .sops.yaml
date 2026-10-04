@@ -2,4 +2,4 @@ creation_rules:
   - path_regex: hosts/legion/secrets\.yaml
     key_groups:
       - age:
-          - age1gwej093p88ma72y7a0et5qn9sqvcfllpxtrq3x20gcjkklr953psp09cjs
+          - age123hvq50mepll7mhjx3u88umhlkx53ychsrq39ds63sskd5h34exsxahmj5
