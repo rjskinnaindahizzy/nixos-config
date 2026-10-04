@@ -224,10 +224,9 @@ in
     btrfs.autoScrub = {
       enable = true;
       interval = "monthly";
-      fileSystems = [
-        "/persist"
-        "/home"
-      ];
+      # fileSystems deliberately unset: nixpkgs derives a device-deduped list from
+      # config.fileSystems (btrfs.nix, mkDefault). /, /nix, /persist and /home are
+      # subvolumes of ONE Btrfs device, so listing them creates duplicate scrubs.
     };
 
     earlyoom = {

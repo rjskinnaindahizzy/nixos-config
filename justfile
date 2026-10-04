@@ -84,7 +84,7 @@ maintain:
 
 # Trigger immediate Restic backup to PowerEdge server (/mnt/share)
 backup:
-    sudo systemctl start restic-backups-persist.service
+    -sudo systemctl start restic-backups-persist.service
     @systemctl status restic-backups-persist.service --no-pager
 
 # Check backup timer and last run logs
@@ -93,10 +93,10 @@ backup-status:
     @echo ""
     @journalctl -u restic-backups-persist.service -n 25 --no-pager
 
-# Trigger manual Btrfs scrub on /persist and /home
+# Trigger a manual Btrfs scrub (one device backs /, /nix, /persist and /home)
 scrub:
-    sudo systemctl start btrfs-scrub-persist.service btrfs-scrub-home.service
-    @echo "Scrub started. Check progress: sudo btrfs scrub status /persist && sudo btrfs scrub status /home"
+    sudo btrfs scrub start /
+    @echo "Scrub running in background — check progress: sudo btrfs scrub status /"
 
 #─────────────────────────────────────────────────────────────────────────────
 # Development & System Introspection
@@ -118,13 +118,13 @@ dev-cuda:
 repl:
     nh os repl {{flake}}
 
-# Safely evaluate a flake attribute with strict parameter sanitization
+# Safely evaluate a flake attribute (accepts "legion" or ".#legion")
 eval attr:
     @bash -c ' \
       set -euo pipefail; \
-      arg="$1"; \
-      if [[ ! "$arg" =~ ^[a-zA-Z0-9_#.-]+$ ]]; then \
-        echo "Error: Invalid Nix attribute syntax: $arg" >&2; \
+      arg="${1#.\#}"; arg="${arg#\#}"; \
+      if [[ ! "$arg" =~ ^[a-zA-Z0-9_.-]+$ ]]; then \
+        echo "Error: Invalid Nix attribute syntax: $1" >&2; \
         exit 1; \
       fi; \
       nix eval ".#$arg"' _ {{quote(attr)}}
@@ -142,7 +142,7 @@ status:
     @nvidia-smi --query-gpu=pstate,power.draw,clocks.gr,clocks.mem,temperature.gpu --format=csv 2>/dev/null || echo "NVIDIA driver inactive"
     @echo ""
     @echo "=== SYSTEM TIMERS ==="
-    @systemctl is-active restic-backups-persist.timer btrfs-scrub-persist.timer btrfs-scrub-home.timer earlyoom.service
+    @systemctl is-active restic-backups-persist.timer earlyoom.service 'btrfs-scrub-*'
 
 # Tail critical system logs
 logs:
