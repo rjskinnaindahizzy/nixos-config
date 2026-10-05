@@ -161,7 +161,7 @@
           ${pkgs.libnotify}/bin/notify-send -i media-eject "Workspace VHD" "Syncing changes to VHD..."
           sync-workspace-vhd push || true
           sync
-          sudo umount /mnt/workspace-d
+          sudo umount -A /dev/nbd0p2 2>/dev/null || sudo umount /mnt/workspace-d 2>/dev/null || true
         fi
         sync
         if [ -b /dev/nbd0 ]; then

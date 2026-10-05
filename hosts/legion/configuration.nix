@@ -15,10 +15,11 @@ let
   hasSecrets = true;
 
   workspaceVhdTeardown = pkgs.writeShellScript "workspace-vhd-teardown" ''
-    if ${pkgs.util-linux}/bin/mountpoint -q /mnt/workspace-d; then
-      /run/wrappers/bin/su - ${userName} -c "sync-workspace-vhd push" || true
+    if [ -b /dev/nbd0 ]; then
       ${pkgs.coreutils}/bin/sync
-      ${pkgs.util-linux}/bin/umount /mnt/workspace-d || true
+      ${pkgs.util-linux}/bin/umount -A /dev/nbd0p2 2>/dev/null || true
+      ${pkgs.util-linux}/bin/umount -A /dev/nbd0 2>/dev/null || true
+      ${pkgs.util-linux}/bin/umount -l /mnt/workspace-d 2>/dev/null || true
       ${pkgs.util-linux}/bin/blockdev --flushbufs /dev/nbd0 2>/dev/null || true
       ${pkgs.qemu-utils}/bin/qemu-nbd --disconnect /dev/nbd0 2>/dev/null || true
       systemctl stop qemu-nbd-workspace 2>/dev/null || true
@@ -321,6 +322,11 @@ in
       ${pkgs.coreutils}/bin/timeout 3 ${pkgs.bash}/bin/bash -c "exec 3<>/dev/tcp/${config.modules.networking.cifsClient.mounts.share.server}/445" 2>/dev/null
     '';
   };
+
+  # Prevent udisks2 and KDE Plasma from automounting NBD block devices to /run/media
+  services.udev.extraRules = ''
+    SUBSYSTEM=="block", KERNEL=="nbd*", ENV{UDISKS_IGNORE}="1"
+  '';
 
   # Safely sync and detach Workspace VHD on shutdown/reboot
   systemd.services.workspace-vhd-shutdown = {

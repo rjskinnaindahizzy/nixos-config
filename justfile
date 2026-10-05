@@ -210,7 +210,7 @@ unmount-vhd:
       if mountpoint -q /mnt/workspace-d; then \
         sync-workspace-vhd push || true; \
         sync; \
-        sudo umount /mnt/workspace-d; \
+        sudo umount -A /dev/nbd0p2 2>/dev/null || sudo umount /mnt/workspace-d 2>/dev/null || true; \
         echo "Unmounted /mnt/workspace-d"; \
       fi; \
       sync; \
