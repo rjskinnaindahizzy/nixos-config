@@ -97,7 +97,14 @@
       mangohud
       gamemode
       heroic
-      bottles
+      (bottles.override {
+        bottles-unwrapped = bottles-unwrapped.overrideAttrs (old: {
+          postPatch = (old.postPatch or "") + ''
+            substituteInPlace bottles/backend/utils/connection.py \
+              --replace-fail "https://ping.usebottles.com" "https://1.1.1.1"
+          '';
+        });
+      })
       protontricks
       winetricks
     ];
