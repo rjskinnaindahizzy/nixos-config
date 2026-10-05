@@ -81,6 +81,10 @@
         ];
       };
     };
+
+    # Xbox One / Series wireless controller Bluetooth driver
+    hardware.xpadneo.enable = true;
+
     # SteamOS gaming optimizations
     boot.kernel.sysctl = {
       # Gaming/Proton memory mapping requirement (mkForce to override hardened profile)
