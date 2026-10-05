@@ -171,15 +171,43 @@ mount-vhd:
         sudo qemu-nbd --connect=/dev/nbd0 /mnt/poweredge_d/vhd/workspace-d.vhdx; \
         sleep 1; \
       fi; \
-      sudo mount -t ntfs3 -o uid=1000,gid=100,windows_names,iocharset=utf8 /dev/nbd0p2 /mnt/workspace-d; \
+      sudo mount -t ntfs3 -o uid=1000,gid=100,windows_names,iocharset=utf8,force /dev/nbd0p2 /mnt/workspace-d; \
       echo "Workspace VHD mounted at /mnt/workspace-d"'
+
+# Repair dirty or corrupted network workspace VHDX via ntfsfix
+fix-vhd:
+    @bash -c ' \
+      set -euo pipefail; \
+      if mountpoint -q /mnt/workspace-d; then \
+        sync; \
+        sudo umount /mnt/workspace-d; \
+        echo "Unmounted /mnt/workspace-d for repair"; \
+      fi; \
+      sudo modprobe nbd; \
+      if ! lsblk /dev/nbd0 2>/dev/null | grep -q "nbd0p2"; then \
+        sudo qemu-nbd --connect=/dev/nbd0 /mnt/poweredge_d/vhd/workspace-d.vhdx; \
+        sleep 1; \
+      fi; \
+      sudo nix-shell -p ntfs3g --run "ntfsfix -b -d /dev/nbd0p2"; \
+      sync; \
+      if [ -b /dev/nbd0 ]; then \
+        sudo blockdev --flushbufs /dev/nbd0 2>/dev/null || true; \
+      fi; \
+      sudo qemu-nbd --disconnect /dev/nbd0 2>/dev/null || true; \
+      echo "VHDX repaired and cleanly detached"'
 
 # Safely unmount and disconnect network workspace VHDX
 unmount-vhd:
     @bash -c ' \
+      set -euo pipefail; \
       if mountpoint -q /mnt/workspace-d; then \
+        sync; \
         sudo umount /mnt/workspace-d; \
         echo "Unmounted /mnt/workspace-d"; \
+      fi; \
+      sync; \
+      if [ -b /dev/nbd0 ]; then \
+        sudo blockdev --flushbufs /dev/nbd0 2>/dev/null || true; \
       fi; \
       sudo qemu-nbd --disconnect /dev/nbd0 2>/dev/null || true; \
       echo "VHDX cleanly detached"'

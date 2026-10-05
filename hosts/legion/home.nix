@@ -35,6 +35,7 @@
       just
       sops
       freerdp
+      ntfs3g
       (pkgs.writeShellScriptBin "rdp-poweredge" ''
         PASS_ARGS=()
         if [ -r /run/secrets/smb_password ]; then
@@ -77,13 +78,18 @@
           sudo qemu-nbd --connect=/dev/nbd0 /mnt/poweredge_d/vhd/workspace-d.vhdx
           sleep 1
         fi
-        sudo mount -t ntfs3 -o uid=1000,gid=100,windows_names,iocharset=utf8 /dev/nbd0p2 /mnt/workspace-d
+        sudo mount -t ntfs3 -o uid=1000,gid=100,windows_names,iocharset=utf8,force /dev/nbd0p2 /mnt/workspace-d
         ${pkgs.libnotify}/bin/notify-send -i drive-harddisk "Workspace VHD Mounted" "Connected to /mnt/workspace-d"
       '')
       (pkgs.writeShellScriptBin "unmount-workspace-vhd" ''
         set -euo pipefail
         if mountpoint -q /mnt/workspace-d; then
+          sync
           sudo umount /mnt/workspace-d
+        fi
+        sync
+        if [ -b /dev/nbd0 ]; then
+          sudo blockdev --flushbufs /dev/nbd0 2>/dev/null || true
         fi
         sudo qemu-nbd --disconnect /dev/nbd0 2>/dev/null || true
         ${pkgs.libnotify}/bin/notify-send -i media-eject "Workspace VHD Detached" "VHDX is cleanly unmounted and unlocked. Ready for Windows."
