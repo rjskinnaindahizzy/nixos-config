@@ -150,6 +150,18 @@
         name = "Kate";
         noDisplay = true;
       };
+      "protontricks" = {
+        name = "Protontricks";
+        noDisplay = true;
+      };
+      "protontricks-launch" = {
+        name = "Protontricks Launcher";
+        noDisplay = true;
+      };
+      "winetricks" = {
+        name = "Winetricks";
+        noDisplay = true;
+      };
       "rdp-poweredge" = {
         name = "PowerEdge Remote Desktop";
         genericName = "Windows Remote Desktop";
@@ -170,7 +182,6 @@
         icon = "media-eject";
         categories = [
           "System"
-          "Utility"
         ];
         terminal = false;
       };
@@ -182,7 +193,6 @@
         icon = "drive-harddisk";
         categories = [
           "System"
-          "Utility"
         ];
         terminal = false;
       };
