@@ -74,28 +74,37 @@
 
         ITEMS=(
           ".claude" ".codex" ".gemini" ".omp" ".team-personas"
+          ".gitconfig" ".vscode"
           "Jobs" "PC" "PowerShell" "customer-outreach" "discussions"
           "omp-config" "scratchpad.txt" "system-prompts"
+          "dev" "switch_dev" "bench" "bounty"
         )
         CFG_ITEMS=(
           "browser-harness" "cagent" "configstore" "scoop" "starship.toml"
+        )
+        EXCLUDES=(
+          "--exclude=node_modules"
+          "--exclude=target"
+          "--exclude=.direnv"
+          "--exclude=*.pyc"
+          "--exclude=__pycache__"
         )
 
         if [ "$MODE" = "push" ]; then
           echo "Syncing /home/user -> /mnt/workspace-d..."
           for item in "''${ITEMS[@]}"; do
             if [ -d "$HOME/$item" ]; then
-              ${pkgs.rsync}/bin/rsync -aHAXu "$HOME/$item/" "/mnt/workspace-d/$item/"
+              ${pkgs.rsync}/bin/rsync -aHAXu "''${EXCLUDES[@]}" "$HOME/$item/" "/mnt/workspace-d/$item/"
             elif [ -f "$HOME/$item" ]; then
-              ${pkgs.rsync}/bin/rsync -aHAXu "$HOME/$item" "/mnt/workspace-d/$item"
+              ${pkgs.rsync}/bin/rsync -aHAXu "''${EXCLUDES[@]}" "$HOME/$item" "/mnt/workspace-d/$item"
             fi
           done
           mkdir -p /mnt/workspace-d/.config
           for cfg in "''${CFG_ITEMS[@]}"; do
             if [ -d "$HOME/.config/$cfg" ]; then
-              ${pkgs.rsync}/bin/rsync -aHAXu "$HOME/.config/$cfg/" "/mnt/workspace-d/.config/$cfg/"
+              ${pkgs.rsync}/bin/rsync -aHAXu "''${EXCLUDES[@]}" "$HOME/.config/$cfg/" "/mnt/workspace-d/.config/$cfg/"
             elif [ -f "$HOME/.config/$cfg" ]; then
-              ${pkgs.rsync}/bin/rsync -aHAXu "$HOME/.config/$cfg" "/mnt/workspace-d/.config/$cfg"
+              ${pkgs.rsync}/bin/rsync -aHAXu "''${EXCLUDES[@]}" "$HOME/.config/$cfg" "/mnt/workspace-d/.config/$cfg"
             fi
           done
           sync
@@ -105,18 +114,18 @@
           for item in "''${ITEMS[@]}"; do
             if [ -d "/mnt/workspace-d/$item" ]; then
               mkdir -p "$HOME/$item"
-              ${pkgs.rsync}/bin/rsync -aHAXu "/mnt/workspace-d/$item/" "$HOME/$item/"
+              ${pkgs.rsync}/bin/rsync -aHAXu "''${EXCLUDES[@]}" "/mnt/workspace-d/$item/" "$HOME/$item/"
             elif [ -f "/mnt/workspace-d/$item" ]; then
-              ${pkgs.rsync}/bin/rsync -aHAXu "/mnt/workspace-d/$item" "$HOME/$item"
+              ${pkgs.rsync}/bin/rsync -aHAXu "''${EXCLUDES[@]}" "/mnt/workspace-d/$item" "$HOME/$item"
             fi
           done
           mkdir -p "$HOME/.config"
           for cfg in "''${CFG_ITEMS[@]}"; do
             if [ -d "/mnt/workspace-d/.config/$cfg" ]; then
               mkdir -p "$HOME/.config/$cfg"
-              ${pkgs.rsync}/bin/rsync -aHAXu "/mnt/workspace-d/.config/$cfg/" "$HOME/.config/$cfg/"
+              ${pkgs.rsync}/bin/rsync -aHAXu "''${EXCLUDES[@]}" "/mnt/workspace-d/.config/$cfg/" "$HOME/.config/$cfg/"
             elif [ -f "/mnt/workspace-d/.config/$cfg" ]; then
-              ${pkgs.rsync}/bin/rsync -aHAXu "/mnt/workspace-d/.config/$cfg" "$HOME/.config/$cfg"
+              ${pkgs.rsync}/bin/rsync -aHAXu "''${EXCLUDES[@]}" "/mnt/workspace-d/.config/$cfg" "$HOME/.config/$cfg"
             fi
           done
           echo "Pull sync complete."
