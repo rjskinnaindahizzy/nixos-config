@@ -64,6 +64,64 @@
           /bpp:32 \
           "$@"
       '')
+      (pkgs.writeShellScriptBin "sync-workspace-vhd" ''
+        set -euo pipefail
+        MODE="''${1:-push}"
+        if ! mountpoint -q /mnt/workspace-d; then
+          echo "Workspace VHD not mounted at /mnt/workspace-d, skipping sync."
+          exit 0
+        fi
+
+        ITEMS=(
+          ".claude" ".codex" ".gemini" ".omp" ".team-personas"
+          "Jobs" "PC" "PowerShell" "customer-outreach" "discussions"
+          "omp-config" "scratchpad.txt" "system-prompts"
+        )
+        CFG_ITEMS=(
+          "browser-harness" "cagent" "configstore" "scoop" "starship.toml"
+        )
+
+        if [ "$MODE" = "push" ]; then
+          echo "Syncing /home/user -> /mnt/workspace-d..."
+          for item in "''${ITEMS[@]}"; do
+            if [ -d "$HOME/$item" ]; then
+              ${pkgs.rsync}/bin/rsync -aHAXu "$HOME/$item/" "/mnt/workspace-d/$item/"
+            elif [ -f "$HOME/$item" ]; then
+              ${pkgs.rsync}/bin/rsync -aHAXu "$HOME/$item" "/mnt/workspace-d/$item"
+            fi
+          done
+          mkdir -p /mnt/workspace-d/.config
+          for cfg in "''${CFG_ITEMS[@]}"; do
+            if [ -d "$HOME/.config/$cfg" ]; then
+              ${pkgs.rsync}/bin/rsync -aHAXu "$HOME/.config/$cfg/" "/mnt/workspace-d/.config/$cfg/"
+            elif [ -f "$HOME/.config/$cfg" ]; then
+              ${pkgs.rsync}/bin/rsync -aHAXu "$HOME/.config/$cfg" "/mnt/workspace-d/.config/$cfg"
+            fi
+          done
+          sync
+          echo "Push sync complete."
+        elif [ "$MODE" = "pull" ]; then
+          echo "Syncing /mnt/workspace-d -> /home/user..."
+          for item in "''${ITEMS[@]}"; do
+            if [ -d "/mnt/workspace-d/$item" ]; then
+              mkdir -p "$HOME/$item"
+              ${pkgs.rsync}/bin/rsync -aHAXu "/mnt/workspace-d/$item/" "$HOME/$item/"
+            elif [ -f "/mnt/workspace-d/$item" ]; then
+              ${pkgs.rsync}/bin/rsync -aHAXu "/mnt/workspace-d/$item" "$HOME/$item"
+            fi
+          done
+          mkdir -p "$HOME/.config"
+          for cfg in "''${CFG_ITEMS[@]}"; do
+            if [ -d "/mnt/workspace-d/.config/$cfg" ]; then
+              mkdir -p "$HOME/.config/$cfg"
+              ${pkgs.rsync}/bin/rsync -aHAXu "/mnt/workspace-d/.config/$cfg/" "$HOME/.config/$cfg/"
+            elif [ -f "/mnt/workspace-d/.config/$cfg" ]; then
+              ${pkgs.rsync}/bin/rsync -aHAXu "/mnt/workspace-d/.config/$cfg" "$HOME/.config/$cfg"
+            fi
+          done
+          echo "Pull sync complete."
+        fi
+      '')
       (pkgs.writeShellScriptBin "mount-workspace-vhd" ''
         set -euo pipefail
         if mountpoint -q /mnt/workspace-d; then
@@ -78,11 +136,14 @@
           sleep 1
         fi
         sudo mount -t ntfs3 -o uid=1000,gid=100,windows_names,iocharset=utf8,force /dev/nbd0p2 /mnt/workspace-d
-        ${pkgs.libnotify}/bin/notify-send -i drive-harddisk "Workspace VHD Mounted" "Connected to /mnt/workspace-d"
+        sync-workspace-vhd pull || true
+        ${pkgs.libnotify}/bin/notify-send -i drive-harddisk "Workspace VHD Mounted" "Connected and synchronized with /home/user"
       '')
       (pkgs.writeShellScriptBin "unmount-workspace-vhd" ''
         set -euo pipefail
         if mountpoint -q /mnt/workspace-d; then
+          ${pkgs.libnotify}/bin/notify-send -i media-eject "Workspace VHD" "Syncing changes to VHD..."
+          sync-workspace-vhd push || true
           sync
           sudo umount /mnt/workspace-d
         fi

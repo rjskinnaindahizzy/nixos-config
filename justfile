@@ -158,7 +158,11 @@ logs:
 rdp *args:
     rdp-poweredge {{args}}
 
-# Mount network workspace VHDX (//Poweredge/D/vhd/workspace-d.vhdx) to /mnt/workspace-d
+# Sync local workspace items to network VHD
+sync-vhd:
+    sync-workspace-vhd push
+
+# Mount network workspace VHDX and sync newer changes to /home/user
 mount-vhd:
     @bash -c ' \
       set -euo pipefail; \
@@ -171,7 +175,8 @@ mount-vhd:
         sleep 1; \
       fi; \
       sudo mount -t ntfs3 -o uid=1000,gid=100,windows_names,iocharset=utf8,force /dev/nbd0p2 /mnt/workspace-d; \
-      echo "Workspace VHD mounted at /mnt/workspace-d"'
+      sync-workspace-vhd pull || true; \
+      echo "Workspace VHD mounted and synchronized with /home/user"'
 
 # Repair dirty or corrupted network workspace VHDX via ntfsfix
 fix-vhd:
@@ -195,11 +200,12 @@ fix-vhd:
       sudo qemu-nbd --disconnect /dev/nbd0 2>/dev/null || true; \
       echo "VHDX repaired and cleanly detached"'
 
-# Safely unmount and disconnect network workspace VHDX
+# Safely sync, unmount, and disconnect network workspace VHDX
 unmount-vhd:
     @bash -c ' \
       set -euo pipefail; \
       if mountpoint -q /mnt/workspace-d; then \
+        sync-workspace-vhd push || true; \
         sync; \
         sudo umount /mnt/workspace-d; \
         echo "Unmounted /mnt/workspace-d"; \

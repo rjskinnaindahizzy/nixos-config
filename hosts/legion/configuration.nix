@@ -311,6 +311,30 @@ in
     '';
   };
 
+  # Safely sync and detach Workspace VHD on shutdown/reboot
+  systemd.services.workspace-vhd-shutdown = {
+    description = "Sync and detach Workspace VHD on shutdown";
+    wantedBy = [ "multi-user.target" ];
+    before = [ "poweroff.target" "reboot.target" "halt.target" "shutdown.target" "network.target" ];
+    unitConfig = {
+      DefaultDependencies = "no";
+    };
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStart = "${pkgs.coreutils}/bin/true";
+      ExecStop = pkgs.writeShellScript "workspace-vhd-shutdown" ''
+        if ${pkgs.util-linux}/bin/mountpoint -q /mnt/workspace-d; then
+          ${pkgs.coreutils}/bin/su - ${userName} -c "sync-workspace-vhd push" || true
+          ${pkgs.coreutils}/bin/sync
+          ${pkgs.util-linux}/bin/umount /mnt/workspace-d || true
+          ${pkgs.util-linux}/bin/blockdev --flushbufs /dev/nbd0 2>/dev/null || true
+          ${pkgs.qemu-utils}/bin/qemu-nbd --disconnect /dev/nbd0 2>/dev/null || true
+        fi
+      '';
+    };
+  };
+
   # Programs
   programs = {
     nh = {
