@@ -54,8 +54,7 @@
             reaper_freq = 5;
             defaultgov = "performance";
             desiredgov = "performance";
-            igpu_desiredgov = "performance";
-            igpu_power_threshold = -1;
+            split_lock = "ignore";
           };
           gpu = {
             apply_gpu_optimisations = "accept-responsibility";
@@ -97,6 +96,8 @@
     environment.systemPackages = with pkgs; [
       mangohud
       gamemode
+      heroic
+      bottles
     ];
   };
 }

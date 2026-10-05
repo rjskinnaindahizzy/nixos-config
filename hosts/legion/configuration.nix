@@ -354,12 +354,17 @@ in
     ];
   };
 
-  # Allow members of wheel to mount internal drives via UDisks2 without password prompts
+  # Allow members of wheel to mount internal drives via UDisks2 without password prompts,
+  # and allow GameMode helper actions (GPU clock offsets, CPU governor tuning)
   security.polkit.extraConfig = ''
     polkit.addRule(function(action, subject) {
       if ((action.id == "org.freedesktop.udisks2.filesystem-mount-system" ||
            action.id == "org.freedesktop.udisks2.filesystem-mount" ||
            action.id == "org.freedesktop.udisks2.filesystem-mount-other-seat") &&
+          subject.isInGroup("wheel")) {
+        return polkit.Result.YES;
+      }
+      if (action.id.indexOf("com.feralinteractive.GameMode.") === 0 &&
           subject.isInGroup("wheel")) {
         return polkit.Result.YES;
       }
