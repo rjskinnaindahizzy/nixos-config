@@ -101,7 +101,7 @@
         bottles-unwrapped = bottles-unwrapped.overrideAttrs (old: {
           postPatch = (old.postPatch or "") + ''
             substituteInPlace bottles/backend/utils/connection.py \
-              --replace-fail "https://ping.usebottles.com" "https://1.1.1.1"
+              --replace-fail "https://ping.usebottles.com" "https://github.com"
           '';
         });
       })
