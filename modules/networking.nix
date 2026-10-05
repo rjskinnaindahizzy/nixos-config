@@ -3,6 +3,7 @@
   config,
   lib,
   pkgs,
+  utils,
   ...
 }:
 let
@@ -193,6 +194,39 @@ in
         };
       };
     };
+
+    # Prevent systemd from failing CIFS automounts when desktop loads before Wi-Fi associates
+    systemd.packages = lib.mkIf cifsCfg.enable [
+      (pkgs.runCommand "cifs-systemd-overrides" { } ''
+        ${lib.concatMapStringsSep "\n" (mount: ''
+          unit="${utils.escapeSystemdPath mount.mountPoint}"
+          mkdir -p "$out/etc/systemd/system/$unit.automount.d" "$out/etc/systemd/system/$unit.mount.d"
+          cat << 'EOF' > "$out/etc/systemd/system/$unit.automount.d/override.conf"
+          [Unit]
+          StartLimitIntervalSec=0
+          EOF
+          cat << 'EOF' > "$out/etc/systemd/system/$unit.mount.d/override.conf"
+          [Unit]
+          StartLimitIntervalSec=0
+          EOF
+        '') (lib.attrValues cifsCfg.mounts)}
+      '')
+    ];
+
+    # Reset and reconnect CIFS automounts when network connectivity is established
+    networking.networkmanager.dispatcherScripts = lib.mkIf cifsCfg.enable [
+      {
+        source = pkgs.writeShellScript "cifs-network-up" ''
+          if [ "$2" = "up" ]; then
+            ${lib.concatMapStringsSep "\n" (mount: ''
+              unit="${utils.escapeSystemdPath mount.mountPoint}"
+              ${pkgs.systemd}/bin/systemctl reset-failed "$unit.automount" "$unit.mount" 2>/dev/null || true
+              ${pkgs.systemd}/bin/systemctl restart "$unit.automount" 2>/dev/null || true
+            '') (lib.attrValues cifsCfg.mounts)}
+          fi
+        '';
+      }
+    ];
 
     # SOPS secrets for SMB credentials
     sops.secrets = lib.mkIf cifsCfg.enable {
