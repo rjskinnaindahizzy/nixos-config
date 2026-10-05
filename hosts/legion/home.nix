@@ -183,7 +183,7 @@
         ls /mnt/poweredge_d/vhd/workspace-d.vhdx >/dev/null
         sudo modprobe nbd ntfs3
         if ! lsblk /dev/nbd0 2>/dev/null | grep -q "nbd0p2"; then
-          sudo systemd-run --slice=system.slice --unit=qemu-nbd-workspace --service-type=forking --property=DefaultDependencies=no qemu-nbd --connect=/dev/nbd0 /mnt/poweredge_d/vhd/workspace-d.vhdx
+          sudo systemctl start qemu-nbd-workspace
           sleep 1
         fi
         sudo mount -t ntfs3 -o uid=1000,gid=100,windows_names,iocharset=utf8,force /dev/nbd0p2 /mnt/workspace-d

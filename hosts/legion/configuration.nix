@@ -329,6 +329,23 @@ in
     SUBSYSTEM=="block", KERNEL=="nbd*", ENV{UDISKS_AUTO}="0", ENV{UDISKS_SYSTEM}="1"
   '';
 
+  # Static systemd service for QEMU NBD daemon
+  systemd.services.qemu-nbd-workspace = {
+    description = "QEMU NBD daemon for Workspace VHD";
+    after = [ "network-online.target" "mnt-poweredge_d.mount" ];
+    requires = [ "mnt-poweredge_d.mount" ];
+    unitConfig = {
+      DefaultDependencies = "no";
+    };
+    serviceConfig = {
+      Type = "forking";
+      ExecStart = "${pkgs.qemu-utils}/bin/qemu-nbd --connect=/dev/nbd0 /mnt/poweredge_d/vhd/workspace-d.vhdx";
+      ExecStop = "${pkgs.qemu-utils}/bin/qemu-nbd --disconnect /dev/nbd0";
+      TimeoutStopSec = "10s";
+      Restart = "no";
+    };
+  };
+
   # Safely sync and detach Workspace VHD on shutdown/reboot
   systemd.services.workspace-vhd-shutdown = {
     description = "Sync and detach Workspace VHD on shutdown";
