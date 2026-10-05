@@ -158,11 +158,15 @@ logs:
 rdp *args:
     rdp-poweredge {{args}}
 
-# Sync local workspace items to network VHD
+# Sync local workspace items to network VHD (push)
 sync-vhd:
     sync-workspace-vhd push
 
-# Mount network workspace VHDX and sync newer changes to /home/user
+# Pull changes from network VHD to /home/user (after working on Windows)
+pull-vhd:
+    sync-workspace-vhd pull
+
+# Mount network workspace VHDX (//Poweredge/D/vhd/workspace-d.vhdx) to /mnt/workspace-d
 mount-vhd:
     @bash -c ' \
       set -euo pipefail; \
@@ -171,12 +175,11 @@ mount-vhd:
       ls /mnt/poweredge_d/vhd/workspace-d.vhdx >/dev/null; \
       sudo modprobe nbd ntfs3; \
       if ! lsblk /dev/nbd0 2>/dev/null | grep -q "nbd0p2"; then \
-        sudo systemd-run --slice=system.slice --unit=qemu-nbd-workspace --service-type=forking qemu-nbd --connect=/dev/nbd0 /mnt/poweredge_d/vhd/workspace-d.vhdx; \
+        sudo systemd-run --slice=system.slice --unit=qemu-nbd-workspace --service-type=forking --property=DefaultDependencies=no qemu-nbd --connect=/dev/nbd0 /mnt/poweredge_d/vhd/workspace-d.vhdx; \
         sleep 1; \
       fi; \
       sudo mount -t ntfs3 -o uid=1000,gid=100,windows_names,iocharset=utf8,force /dev/nbd0p2 /mnt/workspace-d; \
-      sync-workspace-vhd pull || true; \
-      echo "Workspace VHD mounted and synchronized with /home/user"'
+      echo "Workspace VHD mounted at /mnt/workspace-d"'
 
 # Repair dirty or corrupted network workspace VHDX via ntfsfix
 fix-vhd:

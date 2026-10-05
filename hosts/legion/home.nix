@@ -139,12 +139,21 @@
         ls /mnt/poweredge_d/vhd/workspace-d.vhdx >/dev/null
         sudo modprobe nbd ntfs3
         if ! lsblk /dev/nbd0 2>/dev/null | grep -q "nbd0p2"; then
-          sudo systemd-run --slice=system.slice --unit=qemu-nbd-workspace --service-type=forking qemu-nbd --connect=/dev/nbd0 /mnt/poweredge_d/vhd/workspace-d.vhdx
+          sudo systemd-run --slice=system.slice --unit=qemu-nbd-workspace --service-type=forking --property=DefaultDependencies=no qemu-nbd --connect=/dev/nbd0 /mnt/poweredge_d/vhd/workspace-d.vhdx
           sleep 1
         fi
         sudo mount -t ntfs3 -o uid=1000,gid=100,windows_names,iocharset=utf8,force /dev/nbd0p2 /mnt/workspace-d
-        sync-workspace-vhd pull || true
-        ${pkgs.libnotify}/bin/notify-send -i drive-harddisk "Workspace VHD Mounted" "Connected and synchronized with /home/user"
+        ${pkgs.libnotify}/bin/notify-send -i drive-harddisk "Workspace VHD Mounted" "Connected to /mnt/workspace-d"
+      '')
+      (pkgs.writeShellScriptBin "pull-workspace-vhd" ''
+        set -euo pipefail
+        if ! mountpoint -q /mnt/workspace-d; then
+          ${pkgs.libnotify}/bin/notify-send -i dialog-error "Workspace VHD" "VHD is not mounted. Mount first."
+          exit 1
+        fi
+        ${pkgs.libnotify}/bin/notify-send -i drive-harddisk "Workspace VHD" "Pulling changes from VHD..."
+        sync-workspace-vhd pull
+        ${pkgs.libnotify}/bin/notify-send -i drive-harddisk "Workspace VHD" "Pull sync complete."
       '')
       (pkgs.writeShellScriptBin "unmount-workspace-vhd" ''
         set -euo pipefail
