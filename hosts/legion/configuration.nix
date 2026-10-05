@@ -325,7 +325,8 @@ in
   systemd.services.workspace-vhd-shutdown = {
     description = "Sync and detach Workspace VHD on shutdown";
     wantedBy = [ "multi-user.target" ];
-    before = [ "poweroff.target" "reboot.target" "halt.target" "shutdown.target" "network.target" ];
+    before = [ "poweroff.target" "reboot.target" "halt.target" "shutdown.target" "network.target" "umount.target" ];
+    conflicts = [ "poweroff.target" "reboot.target" "halt.target" "shutdown.target" ];
     unitConfig = {
       DefaultDependencies = "no";
     };
@@ -334,6 +335,7 @@ in
       RemainAfterExit = true;
       ExecStart = "${pkgs.coreutils}/bin/true";
       ExecStop = workspaceVhdTeardown;
+      TimeoutStopSec = "20s";
     };
   };
 
