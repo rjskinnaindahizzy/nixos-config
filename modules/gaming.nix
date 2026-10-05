@@ -97,6 +97,9 @@
       mangohud
       gamemode
       heroic
+      # Bottles with upstream network fixes:
+      # 1. ping.usebottles.com is dead upstream (Cloudflare 522), redirected to github.com
+      # 2. Injects User-Agent on all pycurl requests to prevent Cloudflare 403 on repository indexes
       (bottles.override {
         bottles-unwrapped = bottles-unwrapped.overrideAttrs (old: {
           postPatch = (old.postPatch or "") + ''
