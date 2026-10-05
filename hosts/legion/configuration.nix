@@ -51,11 +51,19 @@ in
         sopsFile = secretsFile;
         guiBrowsing = true; # Enables smb:// in Dolphin
 
-        mounts.share = {
-          server = "192.168.50.59"; # POWEREDGE
-          share = "E";
-          mountPoint = "/mnt/share";
-          automount = true;
+        mounts = {
+          share = {
+            server = "192.168.50.59"; # POWEREDGE
+            share = "E";
+            mountPoint = "/mnt/share";
+            automount = true;
+          };
+          poweredge-d = {
+            server = "192.168.50.59"; # POWEREDGE D:
+            share = "D";
+            mountPoint = "/mnt/poweredge-d";
+            automount = true;
+          };
         };
       };
     };
@@ -147,6 +155,8 @@ in
     kernelModules = [
       "lz4"
       "lz4_compress"
+      "nbd"
+      "ntfs3"
     ];
 
     # Stabilize Realtek RTL8852AE Wi-Fi by disabling PCIe ASPM power collapses

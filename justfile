@@ -157,3 +157,28 @@ logs:
 # Connect to PowerEdge Windows via tuned FreeRDP (60fps, AVC444, ClearType)
 rdp *args:
     rdp-poweredge {{args}}
+
+# Mount network workspace VHDX (//Poweredge/D/vhd/workspace-d.vhdx) to /mnt/workspace-d
+mount-vhd:
+    @bash -c ' \
+      set -euo pipefail; \
+      if mountpoint -q /mnt/workspace-d; then echo "Already mounted at /mnt/workspace-d"; exit 0; fi; \
+      sudo mkdir -p /mnt/poweredge-d /mnt/workspace-d; \
+      ls /mnt/poweredge-d/vhd/workspace-d.vhdx >/dev/null; \
+      sudo modprobe nbd ntfs3; \
+      if ! lsblk /dev/nbd0 2>/dev/null | grep -q "nbd0p2"; then \
+        sudo qemu-nbd --connect=/dev/nbd0 /mnt/poweredge-d/vhd/workspace-d.vhdx; \
+        sleep 1; \
+      fi; \
+      sudo mount -t ntfs3 -o uid=1000,gid=100,windows_names,iocharset=utf8 /dev/nbd0p2 /mnt/workspace-d; \
+      echo "Workspace VHD mounted at /mnt/workspace-d"'
+
+# Safely unmount and disconnect network workspace VHDX
+unmount-vhd:
+    @bash -c ' \
+      if mountpoint -q /mnt/workspace-d; then \
+        sudo umount /mnt/workspace-d; \
+        echo "Unmounted /mnt/workspace-d"; \
+      fi; \
+      sudo qemu-nbd --disconnect /dev/nbd0 2>/dev/null || true; \
+      echo "VHDX cleanly detached"'
