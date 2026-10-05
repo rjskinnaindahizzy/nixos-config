@@ -71,7 +71,6 @@
           exit 0
         fi
         sudo mkdir -p /mnt/poweredge_d /mnt/workspace-d
-        [ -e /mnt/poweredge-d ] || sudo ln -s /mnt/poweredge_d /mnt/poweredge-d
         ls /mnt/poweredge_d/vhd/workspace-d.vhdx >/dev/null
         sudo modprobe nbd ntfs3
         if ! lsblk /dev/nbd0 2>/dev/null | grep -q "nbd0p2"; then
