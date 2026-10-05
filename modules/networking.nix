@@ -84,8 +84,8 @@ in
 
               idleTimeout = lib.mkOption {
                 type = lib.types.int;
-                default = 60;
-                description = "Seconds of inactivity before unmounting (only with automount)";
+                default = 0;
+                description = "Seconds of inactivity before unmounting (0 = disabled, never unmount)";
               };
 
               extraOptions = lib.mkOption {
@@ -243,14 +243,20 @@ in
                 "nofail"
                 "noatime"
                 "_netdev"
+                "soft"
+                "actimeo=30"
               ];
-              automountOpts = lib.optionals mount.automount [
-                "noauto"
-                "x-systemd.automount"
-                "x-systemd.idle-timeout=${toString mount.idleTimeout}s"
-                "x-systemd.device-timeout=5s"
-                "x-systemd.mount-timeout=5s"
-              ];
+              automountOpts = lib.optionals mount.automount (
+                [
+                  "noauto"
+                  "x-systemd.automount"
+                  "x-systemd.device-timeout=5s"
+                  "x-systemd.mount-timeout=5s"
+                ]
+                ++ lib.optionals (mount.idleTimeout > 0) [
+                  "x-systemd.idle-timeout=${toString mount.idleTimeout}s"
+                ]
+              );
             in
             baseOpts ++ automountOpts ++ mount.extraOptions;
         }

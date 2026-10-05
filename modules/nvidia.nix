@@ -62,7 +62,6 @@
 
     # Session variables for proper NVIDIA operation under Wayland
     environment.sessionVariables = {
-      GBM_BACKEND = lib.mkDefault "nvidia-drm";
       __GLX_VENDOR_LIBRARY_NAME = lib.mkDefault "nvidia";
       NVD_BACKEND = lib.mkDefault "direct";
       KWIN_DRM_USE_EGL_STREAMS = lib.mkDefault "0";

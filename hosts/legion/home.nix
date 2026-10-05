@@ -87,11 +87,25 @@
     # a wallet, so kwalletd6 blocks on org.kde.KWallet.isEnabled/open and callers
     # (Chromium) stall ~25s per call. "Enabled=false" makes kwalletd6 exit
     # immediately, so callers fail fast. Secrets are covered by LUKS FDE + sops-nix.
-    configFile."kwalletrc".text = ''
-      [Wallet]
-      Enabled=false
-      First Use=false
-    '';
+    configFile = {
+      "kwalletrc".text = ''
+        [Wallet]
+        Enabled=false
+        First Use=false
+      '';
+
+      # Disable remote network thumbnail generation to prevent GUI freezes on CIFS/VHDX
+      "dolphinrc".text = ''
+        [PreviewSettings]
+        MaxRemoteFileSize=0
+      '';
+
+      # Prevent Baloo file indexer from crawling network shares and /mnt
+      "baloofilerc".text = ''
+        [General]
+        exclude folders[$e]=/mnt/
+      '';
+    };
 
     # Hide dead or redundant application launchers from Start Menu
     desktopEntries = {

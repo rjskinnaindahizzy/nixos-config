@@ -61,7 +61,7 @@ in
           poweredge-d = {
             server = "192.168.50.59"; # POWEREDGE D:
             share = "D";
-            mountPoint = "/mnt/poweredge-d";
+            mountPoint = "/mnt/poweredge_d";
             automount = true;
           };
         };
