@@ -98,6 +98,8 @@
       gamemode
       heroic
       bottles
+      protontricks
+      winetricks
     ];
   };
 }
