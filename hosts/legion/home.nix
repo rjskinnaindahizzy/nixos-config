@@ -186,6 +186,23 @@
         ];
         terminal = false;
       };
+      "com.usebottles.bottles" = {
+        name = "Bottles";
+        genericName = "Windows Software Manager";
+        comment = "Run Windows software";
+        exec = "bottles %u";
+        icon = "com.usebottles.bottles";
+        categories = [ "Utility" ];
+        terminal = false;
+        type = "Application";
+        mimeType = [
+          "x-scheme-handler/bottles"
+          "application/x-ms-dos-executable"
+          "application/x-msi"
+          "application/x-ms-shortcut"
+          "application/x-wine-extension-msp"
+        ];
+      };
     };
     mimeApps = {
       enable = true;
