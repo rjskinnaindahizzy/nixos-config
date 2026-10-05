@@ -323,9 +323,9 @@ in
     '';
   };
 
-  # Prevent udisks2 and KDE Plasma from automounting NBD block devices to /run/media
+  # Prevent udisks2 and KDE Plasma from automounting NBD block devices to /run/media while keeping them visible in Devices
   services.udev.extraRules = ''
-    SUBSYSTEM=="block", KERNEL=="nbd*", ENV{UDISKS_IGNORE}="1"
+    SUBSYSTEM=="block", KERNEL=="nbd*", ENV{UDISKS_AUTO}="0", ENV{UDISKS_SYSTEM}="1"
   '';
 
   # Safely sync and detach Workspace VHD on shutdown/reboot
