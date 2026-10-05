@@ -97,17 +97,21 @@
       mangohud
       gamemode
       heroic
-      # Bottles with upstream network fixes:
-      # 1. ping.usebottles.com is dead upstream (Cloudflare 522), redirected to github.com
-      # 2. Injects User-Agent on all pycurl requests to prevent Cloudflare 403 on repository indexes
+      # Bottles with upstream network fixes and suppressed warning popup:
+      # 1. removeWarningPopup = true: removes the "Unsupported Environment" non-Flatpak dialog
+      # 2. ping.usebottles.com is dead upstream (Cloudflare 522), redirected to github.com
+      # 3. Injects User-Agent on all pycurl requests to prevent Cloudflare 403 on repository indexes
       (bottles.override {
-        bottles-unwrapped = bottles-unwrapped.overrideAttrs (old: {
-          postPatch = (old.postPatch or "") + ''
-            substituteInPlace bottles/backend/utils/connection.py \
-              --replace-fail "https://ping.usebottles.com" "https://github.com"
-            find bottles/ -name "*.py" -exec sed -i 's/c = pycurl.Curl()/c = pycurl.Curl(); c.setopt(c.USERAGENT, "curl\/8.12.0")/g' {} +
-          '';
-        });
+        removeWarningPopup = true;
+        bottles-unwrapped =
+          (bottles-unwrapped.override { removeWarningPopup = true; }).overrideAttrs
+            (old: {
+              postPatch = (old.postPatch or "") + ''
+                substituteInPlace bottles/backend/utils/connection.py \
+                  --replace-fail "https://ping.usebottles.com" "https://github.com"
+                find bottles/ -name "*.py" -exec sed -i 's/c = pycurl.Curl()/c = pycurl.Curl(); c.setopt(c.USERAGENT, "curl\/8.12.0")/g' {} +
+              '';
+            });
       })
       protontricks
       winetricks
