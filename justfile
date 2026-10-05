@@ -158,13 +158,13 @@ logs:
 rdp *args:
     rdp-poweredge {{args}}
 
-# Sync local workspace items to network VHD (push)
-sync-vhd:
-    sync-workspace-vhd push
+# Sync local workspace items to network VHD (push, accepts --force)
+sync-vhd *args:
+    sync-workspace-vhd push {{args}}
 
 # Pull changes from network VHD to /home/user (after working on Windows)
-pull-vhd:
-    sync-workspace-vhd pull
+pull-vhd *args:
+    sync-workspace-vhd pull {{args}}
 
 # Mount network workspace VHDX (//Poweredge/D/vhd/workspace-d.vhdx) to /mnt/workspace-d
 mount-vhd:
@@ -187,12 +187,12 @@ fix-vhd:
       set -euo pipefail; \
       if mountpoint -q /mnt/workspace-d; then \
         sync; \
-        sudo umount /mnt/workspace-d; \
+        sudo umount -A /dev/nbd0p2 2>/dev/null || sudo umount /mnt/workspace-d 2>/dev/null || true; \
         echo "Unmounted /mnt/workspace-d for repair"; \
       fi; \
       sudo modprobe nbd; \
       if ! lsblk /dev/nbd0 2>/dev/null | grep -q "nbd0p2"; then \
-        sudo qemu-nbd --connect=/dev/nbd0 /mnt/poweredge_d/vhd/workspace-d.vhdx; \
+        sudo systemd-run --slice=system.slice --unit=qemu-nbd-workspace --service-type=forking --property=DefaultDependencies=no qemu-nbd --connect=/dev/nbd0 /mnt/poweredge_d/vhd/workspace-d.vhdx; \
         sleep 1; \
       fi; \
       sudo nix-shell -p ntfs3g --run "ntfsfix -b -d /dev/nbd0p2"; \
@@ -201,6 +201,7 @@ fix-vhd:
         sudo blockdev --flushbufs /dev/nbd0 2>/dev/null || true; \
       fi; \
       sudo qemu-nbd --disconnect /dev/nbd0 2>/dev/null || true; \
+      sudo systemctl stop qemu-nbd-workspace 2>/dev/null || true; \
       echo "VHDX repaired and cleanly detached"'
 
 # Safely sync, unmount, and disconnect network workspace VHDX
