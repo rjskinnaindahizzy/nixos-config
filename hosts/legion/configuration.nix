@@ -23,6 +23,7 @@ let
       ${pkgs.util-linux}/bin/blockdev --flushbufs /dev/nbd0 2>/dev/null || true
       ${pkgs.qemu-utils}/bin/qemu-nbd --disconnect /dev/nbd0 2>/dev/null || true
       systemctl stop qemu-nbd-workspace 2>/dev/null || true
+      ${pkgs.procps}/bin/pkill -9 -f "qemu-nbd.*workspace-d.vhdx" 2>/dev/null || true
     fi
   '';
 in
@@ -332,7 +333,8 @@ in
   systemd.services.workspace-vhd-shutdown = {
     description = "Sync and detach Workspace VHD on shutdown";
     wantedBy = [ "multi-user.target" ];
-    before = [ "poweroff.target" "reboot.target" "halt.target" "shutdown.target" "network.target" "umount.target" ];
+    after = [ "network.target" "network-online.target" "wpa_supplicant.service" "NetworkManager.service" "mnt-poweredge_d.mount" ];
+    before = [ "poweroff.target" "reboot.target" "halt.target" "shutdown.target" "umount.target" ];
     conflicts = [ "poweroff.target" "reboot.target" "halt.target" "shutdown.target" ];
     unitConfig = {
       DefaultDependencies = "no";
@@ -342,7 +344,7 @@ in
       RemainAfterExit = true;
       ExecStart = "${pkgs.coreutils}/bin/true";
       ExecStop = workspaceVhdTeardown;
-      TimeoutStopSec = "20s";
+      TimeoutStopSec = "10s";
     };
   };
 
