@@ -340,7 +340,7 @@ in
   };
 
   # Games partition auto-mount (exFAT on secondary NVMe)
-  fileSystems."/mnt/windows" = {
+  fileSystems."/mnt/games" = {
     device = "/dev/disk/by-uuid/4893-3761";
     fsType = "exfat";
     options = [
@@ -354,10 +354,17 @@ in
     ];
   };
 
-  # Blacklist unstable drivers
-  boot.blacklistedKernelModules = [
-    "ntfs3"
-  ];
+  # Allow members of wheel to mount internal drives via UDisks2 without password prompts
+  security.polkit.extraConfig = ''
+    polkit.addRule(function(action, subject) {
+      if ((action.id == "org.freedesktop.udisks2.filesystem-mount-system" ||
+           action.id == "org.freedesktop.udisks2.filesystem-mount" ||
+           action.id == "org.freedesktop.udisks2.filesystem-mount-other-seat") &&
+          subject.isInGroup("wheel")) {
+        return polkit.Result.YES;
+      }
+    });
+  '';
 
   # Delay Logitech HID++ module load to avoid early-init issues
   systemd.services.logitech-hidpp-load = {
