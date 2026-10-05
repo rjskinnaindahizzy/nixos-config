@@ -130,6 +130,12 @@
         [General]
         exclude folders[$e]=/mnt/
       '';
+
+      # Start Plasma with an empty session (disable session restore of open apps/windows on boot)
+      "ksmserverrc".text = ''
+        [General]
+        loginMode=emptySession
+      '';
     };
 
     # Hide dead or redundant application launchers from Start Menu

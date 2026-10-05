@@ -343,6 +343,7 @@ in
   fileSystems."/mnt/games" = {
     device = "/dev/disk/by-uuid/4893-3761";
     fsType = "exfat";
+    noCheck = true;
     options = [
       "uid=1000"
       "gid=100"
