@@ -156,7 +156,7 @@ in
       "tsc=nowatchdog"
       "debugfs=on"
       "pci=noaer" # Suppress PCI AER errors (benign ACPI noise)
-      "loglevel=3" # Suppress non-critical kernel logs
+      "systemd.show_status=1" # Display live shutdown/boot status on screen
       # Fix LUKS passphrase keyboard input issues on Lenovo Legion
       "i8042.nopnp" # Don't rely on PNP detection (fixes timing issues)
       "i8042.dumbkbd" # Treat keyboard as dumb device (no timing assumptions)
