@@ -13,6 +13,16 @@ let
   userHome = "/home/${userName}";
   secretsFile = "/persist/system/nixos-config/hosts/legion/secrets.yaml";
   hasSecrets = true;
+
+  workspaceVhdTeardown = pkgs.writeShellScript "workspace-vhd-teardown" ''
+    if ${pkgs.util-linux}/bin/mountpoint -q /mnt/workspace-d; then
+      ${pkgs.coreutils}/bin/su - ${userName} -c "sync-workspace-vhd push" || true
+      ${pkgs.coreutils}/bin/sync
+      ${pkgs.util-linux}/bin/umount /mnt/workspace-d || true
+      ${pkgs.util-linux}/bin/blockdev --flushbufs /dev/nbd0 2>/dev/null || true
+      ${pkgs.qemu-utils}/bin/qemu-nbd --disconnect /dev/nbd0 2>/dev/null || true
+    fi
+  '';
 in
 {
   imports = [
@@ -323,15 +333,18 @@ in
       Type = "oneshot";
       RemainAfterExit = true;
       ExecStart = "${pkgs.coreutils}/bin/true";
-      ExecStop = pkgs.writeShellScript "workspace-vhd-shutdown" ''
-        if ${pkgs.util-linux}/bin/mountpoint -q /mnt/workspace-d; then
-          ${pkgs.coreutils}/bin/su - ${userName} -c "sync-workspace-vhd push" || true
-          ${pkgs.coreutils}/bin/sync
-          ${pkgs.util-linux}/bin/umount /mnt/workspace-d || true
-          ${pkgs.util-linux}/bin/blockdev --flushbufs /dev/nbd0 2>/dev/null || true
-          ${pkgs.qemu-utils}/bin/qemu-nbd --disconnect /dev/nbd0 2>/dev/null || true
-        fi
-      '';
+      ExecStop = workspaceVhdTeardown;
+    };
+  };
+
+  # Safely sync and detach Workspace VHD before system sleep/suspend
+  systemd.services.workspace-vhd-sleep = {
+    description = "Sync and detach Workspace VHD before sleep";
+    wantedBy = [ "sleep.target" ];
+    before = [ "sleep.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = workspaceVhdTeardown;
     };
   };
 
