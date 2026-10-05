@@ -102,6 +102,7 @@
           postPatch = (old.postPatch or "") + ''
             substituteInPlace bottles/backend/utils/connection.py \
               --replace-fail "https://ping.usebottles.com" "https://github.com"
+            find bottles/ -name "*.py" -exec sed -i 's/c = pycurl.Curl()/c = pycurl.Curl(); c.setopt(c.USERAGENT, "curl\/8.12.0")/g' {} +
           '';
         });
       })
