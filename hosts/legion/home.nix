@@ -75,9 +75,8 @@
         ITEMS=(
           ".claude" ".codex" ".gemini" ".omp" ".team-personas"
           ".gitconfig" ".vscode"
-          "Jobs" "PC" "PowerShell" "customer-outreach" "discussions"
-          "omp-config" "scratchpad.txt" "system-prompts"
-          "dev" "switch_dev" "bench" "bounty"
+          "Projects"
+          "Jobs" "discussions" "omp-config" "scratchpad.txt" "system-prompts"
         )
         CFG_ITEMS=(
           "browser-harness" "cagent" "configstore" "scoop" "starship.toml"
