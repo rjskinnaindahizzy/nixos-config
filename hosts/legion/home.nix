@@ -67,6 +67,10 @@
       (pkgs.writeShellScriptBin "sync-workspace-vhd" ''
         set -euo pipefail
         MODE="''${1:-push}"
+        FORCE="''${2:-}"
+        STATE_DIR="$HOME/.local/state"
+        SENTINEL="$STATE_DIR/vhd_last_push"
+
         if ! mountpoint -q /mnt/workspace-d; then
           echo "Workspace VHD not mounted at /mnt/workspace-d, skipping sync."
           exit 0
@@ -89,43 +93,83 @@
         )
 
         if [ "$MODE" = "push" ]; then
-          echo "Syncing /home/user -> /mnt/workspace-d..."
-          for item in "''${ITEMS[@]}"; do
-            if [ -d "$HOME/$item" ]; then
-              ${pkgs.rsync}/bin/rsync -aHAXu "''${EXCLUDES[@]}" "$HOME/$item/" "/mnt/workspace-d/$item/"
-            elif [ -f "$HOME/$item" ]; then
-              ${pkgs.rsync}/bin/rsync -aHAXu "''${EXCLUDES[@]}" "$HOME/$item" "/mnt/workspace-d/$item"
+          mkdir -p "$STATE_DIR"
+
+          # Fast pre-check: if sentinel exists and no files changed locally, skip network scan
+          if [ -f "$SENTINEL" ] && [ "$FORCE" != "--force" ]; then
+            SEARCH_PATHS=()
+            for item in "''${ITEMS[@]}"; do
+              [ -e "$HOME/$item" ] && SEARCH_PATHS+=("$HOME/$item")
+            done
+            for cfg in "''${CFG_ITEMS[@]}"; do
+              [ -e "$HOME/.config/$cfg" ] && SEARCH_PATHS+=("$HOME/.config/$cfg")
+            done
+
+            if [ ''${#SEARCH_PATHS[@]} -gt 0 ]; then
+              MODIFIED=$(find "''${SEARCH_PATHS[@]}" -newer "$SENTINEL" 2>/dev/null | head -n 1 || true)
+              if [ -z "$MODIFIED" ]; then
+                echo "No local changes detected since last push. Sync skipped."
+                exit 0
+              fi
             fi
-          done
+          fi
+
+          echo "Syncing /home/user -> /mnt/workspace-d (parallel)..."
           mkdir -p /mnt/workspace-d/.config
-          for cfg in "''${CFG_ITEMS[@]}"; do
-            if [ -d "$HOME/.config/$cfg" ]; then
-              ${pkgs.rsync}/bin/rsync -aHAXu "''${EXCLUDES[@]}" "$HOME/.config/$cfg/" "/mnt/workspace-d/.config/$cfg/"
-            elif [ -f "$HOME/.config/$cfg" ]; then
-              ${pkgs.rsync}/bin/rsync -aHAXu "''${EXCLUDES[@]}" "$HOME/.config/$cfg" "/mnt/workspace-d/.config/$cfg"
-            fi
+
+          for item in "''${ITEMS[@]}"; do
+            (
+              if [ -d "$HOME/$item" ]; then
+                ${pkgs.rsync}/bin/rsync -aHAXu "''${EXCLUDES[@]}" "$HOME/$item/" "/mnt/workspace-d/$item/"
+              elif [ -f "$HOME/$item" ]; then
+                ${pkgs.rsync}/bin/rsync -aHAXu "''${EXCLUDES[@]}" "$HOME/$item" "/mnt/workspace-d/$item"
+              fi
+            ) &
           done
+
+          for cfg in "''${CFG_ITEMS[@]}"; do
+            (
+              if [ -d "$HOME/.config/$cfg" ]; then
+                ${pkgs.rsync}/bin/rsync -aHAXu "''${EXCLUDES[@]}" "$HOME/.config/$cfg/" "/mnt/workspace-d/.config/$cfg/"
+              elif [ -f "$HOME/.config/$cfg" ]; then
+                ${pkgs.rsync}/bin/rsync -aHAXu "''${EXCLUDES[@]}" "$HOME/.config/$cfg" "/mnt/workspace-d/.config/$cfg"
+              fi
+            ) &
+          done
+
+          wait
           sync
+          touch "$SENTINEL"
           echo "Push sync complete."
         elif [ "$MODE" = "pull" ]; then
-          echo "Syncing /mnt/workspace-d -> /home/user..."
-          for item in "''${ITEMS[@]}"; do
-            if [ -d "/mnt/workspace-d/$item" ]; then
-              mkdir -p "$HOME/$item"
-              ${pkgs.rsync}/bin/rsync -aHAXu "''${EXCLUDES[@]}" "/mnt/workspace-d/$item/" "$HOME/$item/"
-            elif [ -f "/mnt/workspace-d/$item" ]; then
-              ${pkgs.rsync}/bin/rsync -aHAXu "''${EXCLUDES[@]}" "/mnt/workspace-d/$item" "$HOME/$item"
-            fi
-          done
+          echo "Syncing /mnt/workspace-d -> /home/user (parallel)..."
           mkdir -p "$HOME/.config"
-          for cfg in "''${CFG_ITEMS[@]}"; do
-            if [ -d "/mnt/workspace-d/.config/$cfg" ]; then
-              mkdir -p "$HOME/.config/$cfg"
-              ${pkgs.rsync}/bin/rsync -aHAXu "''${EXCLUDES[@]}" "/mnt/workspace-d/.config/$cfg/" "$HOME/.config/$cfg/"
-            elif [ -f "/mnt/workspace-d/.config/$cfg" ]; then
-              ${pkgs.rsync}/bin/rsync -aHAXu "''${EXCLUDES[@]}" "/mnt/workspace-d/.config/$cfg" "$HOME/.config/$cfg"
-            fi
+
+          for item in "''${ITEMS[@]}"; do
+            (
+              if [ -d "/mnt/workspace-d/$item" ]; then
+                mkdir -p "$HOME/$item"
+                ${pkgs.rsync}/bin/rsync -aHAXu "''${EXCLUDES[@]}" "/mnt/workspace-d/$item/" "$HOME/$item/"
+              elif [ -f "/mnt/workspace-d/$item" ]; then
+                ${pkgs.rsync}/bin/rsync -aHAXu "''${EXCLUDES[@]}" "/mnt/workspace-d/$item" "$HOME/$item"
+              fi
+            ) &
           done
+
+          for cfg in "''${CFG_ITEMS[@]}"; do
+            (
+              if [ -d "/mnt/workspace-d/.config/$cfg" ]; then
+                mkdir -p "$HOME/.config/$cfg"
+                ${pkgs.rsync}/bin/rsync -aHAXu "''${EXCLUDES[@]}" "/mnt/workspace-d/.config/$cfg/" "$HOME/.config/$cfg/"
+              elif [ -f "/mnt/workspace-d/.config/$cfg" ]; then
+                ${pkgs.rsync}/bin/rsync -aHAXu "''${EXCLUDES[@]}" "/mnt/workspace-d/.config/$cfg" "$HOME/.config/$cfg"
+              fi
+            ) &
+          done
+
+          wait
+          mkdir -p "$STATE_DIR"
+          touch "$SENTINEL"
           echo "Pull sync complete."
         fi
       '')
