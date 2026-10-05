@@ -171,7 +171,7 @@ mount-vhd:
       ls /mnt/poweredge_d/vhd/workspace-d.vhdx >/dev/null; \
       sudo modprobe nbd ntfs3; \
       if ! lsblk /dev/nbd0 2>/dev/null | grep -q "nbd0p2"; then \
-        sudo qemu-nbd --connect=/dev/nbd0 /mnt/poweredge_d/vhd/workspace-d.vhdx; \
+        sudo systemd-run --slice=system.slice --unit=qemu-nbd-workspace qemu-nbd --connect=/dev/nbd0 /mnt/poweredge_d/vhd/workspace-d.vhdx; \
         sleep 1; \
       fi; \
       sudo mount -t ntfs3 -o uid=1000,gid=100,windows_names,iocharset=utf8,force /dev/nbd0p2 /mnt/workspace-d; \
@@ -215,4 +215,5 @@ unmount-vhd:
         sudo blockdev --flushbufs /dev/nbd0 2>/dev/null || true; \
       fi; \
       sudo qemu-nbd --disconnect /dev/nbd0 2>/dev/null || true; \
+      sudo systemctl stop qemu-nbd-workspace 2>/dev/null || true; \
       echo "VHDX cleanly detached"'

@@ -16,11 +16,12 @@ let
 
   workspaceVhdTeardown = pkgs.writeShellScript "workspace-vhd-teardown" ''
     if ${pkgs.util-linux}/bin/mountpoint -q /mnt/workspace-d; then
-      ${pkgs.coreutils}/bin/su - ${userName} -c "sync-workspace-vhd push" || true
+      /run/wrappers/bin/su - ${userName} -c "sync-workspace-vhd push" || true
       ${pkgs.coreutils}/bin/sync
       ${pkgs.util-linux}/bin/umount /mnt/workspace-d || true
       ${pkgs.util-linux}/bin/blockdev --flushbufs /dev/nbd0 2>/dev/null || true
       ${pkgs.qemu-utils}/bin/qemu-nbd --disconnect /dev/nbd0 2>/dev/null || true
+      systemctl stop qemu-nbd-workspace 2>/dev/null || true
     fi
   '';
 in
