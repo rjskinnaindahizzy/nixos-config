@@ -187,7 +187,8 @@
           sleep 1
         fi
         sudo mount -t ntfs3 -o uid=1000,gid=100,windows_names,iocharset=utf8,force /dev/nbd0p2 /mnt/workspace-d
-        ${pkgs.libnotify}/bin/notify-send -i drive-harddisk "Workspace VHD Mounted" "Connected to /mnt/workspace-d"
+        sync-workspace-vhd pull || true
+        ${pkgs.libnotify}/bin/notify-send -i drive-harddisk "Workspace VHD Mounted" "Connected and synchronized with /home/user"
       '')
       (pkgs.writeShellScriptBin "pull-workspace-vhd" ''
         set -euo pipefail

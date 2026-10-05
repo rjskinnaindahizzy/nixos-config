@@ -179,7 +179,8 @@ mount-vhd:
         sleep 1; \
       fi; \
       sudo mount -t ntfs3 -o uid=1000,gid=100,windows_names,iocharset=utf8,force /dev/nbd0p2 /mnt/workspace-d; \
-      echo "Workspace VHD mounted at /mnt/workspace-d"'
+      sync-workspace-vhd pull || true; \
+      echo "Workspace VHD mounted and synchronized with /home/user"'
 
 # Repair dirty or corrupted network workspace VHDX via ntfsfix
 fix-vhd:
