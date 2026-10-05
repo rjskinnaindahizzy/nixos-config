@@ -63,6 +63,31 @@
           /bpp:32 \
           "$@"
       '')
+      (pkgs.writeShellScriptBin "mount-workspace-vhd" ''
+        set -euo pipefail
+        if mountpoint -q /mnt/workspace-d; then
+          ${pkgs.libnotify}/bin/notify-send -i drive-harddisk "Workspace VHD" "Already mounted at /mnt/workspace-d"
+          exit 0
+        fi
+        sudo mkdir -p /mnt/poweredge_d /mnt/workspace-d
+        [ -e /mnt/poweredge-d ] || sudo ln -s /mnt/poweredge_d /mnt/poweredge-d
+        ls /mnt/poweredge_d/vhd/workspace-d.vhdx >/dev/null
+        sudo modprobe nbd ntfs3
+        if ! lsblk /dev/nbd0 2>/dev/null | grep -q "nbd0p2"; then
+          sudo qemu-nbd --connect=/dev/nbd0 /mnt/poweredge_d/vhd/workspace-d.vhdx
+          sleep 1
+        fi
+        sudo mount -t ntfs3 -o uid=1000,gid=100,windows_names,iocharset=utf8 /dev/nbd0p2 /mnt/workspace-d
+        ${pkgs.libnotify}/bin/notify-send -i drive-harddisk "Workspace VHD Mounted" "Connected to /mnt/workspace-d"
+      '')
+      (pkgs.writeShellScriptBin "unmount-workspace-vhd" ''
+        set -euo pipefail
+        if mountpoint -q /mnt/workspace-d; then
+          sudo umount /mnt/workspace-d
+        fi
+        sudo qemu-nbd --disconnect /dev/nbd0 2>/dev/null || true
+        ${pkgs.libnotify}/bin/notify-send -i media-eject "Workspace VHD Detached" "VHDX is cleanly unmounted and unlocked. Ready for Windows."
+      '')
     ];
 
     # NOTE: /etc/nixos is a SYMLINK to /persist/system/nixos-config, and
@@ -137,6 +162,30 @@
         ];
         terminal = false;
       };
+      "detach-workspace-vhd" = {
+        name = "Safely Detach Workspace VHD";
+        genericName = "Detach Virtual Hard Disk";
+        comment = "Unmount and release network lock for Windows";
+        exec = "unmount-workspace-vhd";
+        icon = "media-eject";
+        categories = [
+          "System"
+          "Utility"
+        ];
+        terminal = false;
+      };
+      "mount-workspace-vhd" = {
+        name = "Mount Workspace VHD";
+        genericName = "Mount Virtual Hard Disk";
+        comment = "Connect network workspace-d.vhdx";
+        exec = "mount-workspace-vhd";
+        icon = "drive-harddisk";
+        categories = [
+          "System"
+          "Utility"
+        ];
+        terminal = false;
+      };
     };
     mimeApps = {
       enable = true;
@@ -144,5 +193,24 @@
         "text/plain" = [ "org.kde.kwrite.desktop" ];
       };
     };
+    dataFile."kio/servicemenus/workspace-vhd.desktop".text = ''
+      [Desktop Entry]
+      Type=Service
+      X-KDE-ServiceTypes=KonqPopupMenu/Plugin
+      MimeType=all/allfiles;inode/directory;
+      Actions=detachVHD;mountVHD;
+      X-KDE-Priority=TopLevel
+      X-KDE-Submenu=Workspace VHD
+
+      [Desktop Action detachVHD]
+      Name=Safely Detach VHD (Release for Windows)
+      Icon=media-eject
+      Exec=unmount-workspace-vhd
+
+      [Desktop Action mountVHD]
+      Name=Mount Workspace VHD
+      Icon=drive-harddisk
+      Exec=mount-workspace-vhd
+    '';
   };
 }
