@@ -27,6 +27,9 @@
 
     programs.virt-manager.enable = true;
 
+    # Allow guest VMs to reach host DHCP and DNS on virbr0
+    networking.firewall.trustedInterfaces = [ "virbr0" ];
+
     # Spice and USB redirection for guest support
     virtualisation.spiceUSBRedirection.enable = true;
 
