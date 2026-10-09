@@ -531,6 +531,8 @@ in
     usbutils
     jq
     ripgrep
+    p7zip
+    unrar
 
     # Web Browsers
     (google-chrome.override {
